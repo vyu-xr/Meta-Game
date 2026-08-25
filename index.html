@@ -121,7 +121,7 @@
         // Use a low FOV perspective camera pulled far back to flatten depth (simulating isometric/orthographic)
         const camera = new THREE.PerspectiveCamera(20, window.innerWidth / window.innerHeight, 0.1, 1000);
         // Angle the camera down steeply and pull it back
-        camera.position.set(0, 28, 40);
+        camera.position.set(0, 30, 34);
         
         const renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
@@ -474,9 +474,9 @@
         const clock = new THREE.Clock();
         const moveSpeed = 8; // units per second
         const enemySpeed = 3;
-        const cameraHeight = 28;
-        const cameraBackDistance = 40;
-        const cameraLookAhead = 6;
+        const cameraHeight = 30;
+        const cameraBackDistance = 34;
+        const cameraLookAhead = 3.5;
 
         function animate() {
             requestAnimationFrame(animate);
