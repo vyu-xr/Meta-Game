@@ -332,6 +332,7 @@
         let enemySpawnTimer = 0;
         const enemySpawnInterval = 0.35;
         const maxEnemies = 10;
+        let totalEnemiesSpawned = 0;
 
         const createEnemyTexture = () => {
             const size = 128;
@@ -516,8 +517,9 @@
             // --- Enemy AI & Spawning ---
             if (baseHealth > 0) {
                 enemySpawnTimer += dt;
-                if (enemySpawnTimer >= enemySpawnInterval && enemies.length < maxEnemies) {
+                if (enemySpawnTimer >= enemySpawnInterval && totalEnemiesSpawned < maxEnemies) {
                     spawnEnemy();
+                    totalEnemiesSpawned++;
                     enemySpawnTimer = 0;
                 }
 
