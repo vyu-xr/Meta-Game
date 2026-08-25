@@ -1,0 +1,100 @@
+# Base layout template for Blender.
+# Units match the current Three.js scene: X/Z ground, Y up.
+# Import into Blender, use as a placement guide, then replace marker geometry with final art.
+mtllib base_layout.mtl
+
+o HOME_ground_24x24
+usemtl Ground
+v -12.000 0.000 -12.000
+v 12.000 0.000 -12.000
+v 12.000 0.000 12.000
+v -12.000 0.000 12.000
+f 1 2 3 4
+
+o HOME_base_circle_radius_3
+usemtl BaseCircle
+v 3.000 0.020 0.000
+v 2.772 0.020 1.148
+v 2.121 0.020 2.121
+v 1.148 0.020 2.772
+v 0.000 0.020 3.000
+v -1.148 0.020 2.772
+v -2.121 0.020 2.121
+v -2.772 0.020 1.148
+v -3.000 0.020 0.000
+v -2.772 0.020 -1.148
+v -2.121 0.020 -2.121
+v -1.148 0.020 -2.772
+v 0.000 0.020 -3.000
+v 1.148 0.020 -2.772
+v 2.121 0.020 -2.121
+v 2.772 0.020 -1.148
+f 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20
+
+o RITUAL_ring_radius_5
+usemtl RitualRing
+v 5.000 0.030 0.000
+v 4.619 0.030 1.913
+v 3.536 0.030 3.536
+v 1.913 0.030 4.619
+v 0.000 0.030 5.000
+v -1.913 0.030 4.619
+v -3.536 0.030 3.536
+v -4.619 0.030 1.913
+v -5.000 0.030 0.000
+v -4.619 0.030 -1.913
+v -3.536 0.030 -3.536
+v -1.913 0.030 -4.619
+v 0.000 0.030 -5.000
+v 1.913 0.030 -4.619
+v 3.536 0.030 -3.536
+v 4.619 0.030 -1.913
+l 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 21
+
+o RITUAL_candle_A_marker
+usemtl CandleMarker
+v -0.300 0.060 -5.300
+v 0.300 0.060 -5.300
+v 0.300 0.060 -4.700
+v -0.300 0.060 -4.700
+f 37 38 39 40
+
+o RITUAL_stone_A_marker
+usemtl StoneMarker
+v 4.180 0.060 -2.950
+v 4.780 0.060 -2.950
+v 4.780 0.060 -2.350
+v 4.180 0.060 -2.350
+f 41 42 43 44
+
+o RITUAL_candle_B_marker
+usemtl CandleMarker
+v 4.180 0.060 2.350
+v 4.780 0.060 2.350
+v 4.780 0.060 2.950
+v 4.180 0.060 2.950
+f 45 46 47 48
+
+o RITUAL_stone_B_marker
+usemtl StoneMarker
+v -0.300 0.060 4.700
+v 0.300 0.060 4.700
+v 0.300 0.060 5.300
+v -0.300 0.060 5.300
+f 49 50 51 52
+
+o RITUAL_candle_C_marker
+usemtl CandleMarker
+v -4.780 0.060 2.350
+v -4.180 0.060 2.350
+v -4.180 0.060 2.950
+v -4.780 0.060 2.950
+f 53 54 55 56
+
+o RITUAL_stone_C_marker
+usemtl StoneMarker
+v -4.780 0.060 -2.950
+v -4.180 0.060 -2.950
+v -4.180 0.060 -2.350
+v -4.780 0.060 -2.350
+f 57 58 59 60
