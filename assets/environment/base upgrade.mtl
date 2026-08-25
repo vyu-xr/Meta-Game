@@ -1,4 +1,4 @@
-# Blender 5.0.1 MTL File: 'base.blend'
+# Blender 5.0.1 MTL File: 'None'
 # www.blender.org
 
 newmtl CandleMarker
@@ -21,16 +21,6 @@ Ni 1.500000
 d 1.000000
 illum 1
 
-newmtl RitualRing
-Ns 0.000000
-Ka 1.000000 1.000000 1.000000
-Kd 0.490000 0.835000 0.933000
-Ks 0.000000 0.000000 0.000000
-Ke 0.000000 0.000000 0.000000
-Ni 1.500000
-d 1.000000
-illum 1
-
 newmtl StoneMarker
 Ns 0.000000
 Ka 1.000000 1.000000 1.000000
@@ -41,7 +31,7 @@ Ni 1.500000
 d 1.000000
 illum 1
 
-newmtl initialShadingGroup
+newmtl baseFBXASC032ofFBXASC032houseSG
 Ns 0.000000
 Ka 1.000000 1.000000 1.000000
 Kd 0.500000 0.500000 0.500000

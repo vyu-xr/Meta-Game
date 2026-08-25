@@ -235,6 +235,7 @@
             const name = objectData.name.toLowerCase();
             const materialName = objectData.material;
 
+            if (name.includes('base_ground') || name.includes('basefbxasc032offbxasc032house')) return layoutMaterials.HouseBase;
             if (name.includes('ground')) return layoutMaterials.Ground;
             if (name.includes('base_circle')) return layoutMaterials.BaseCircle;
             if (name.includes('candle')) return layoutMaterials.CandleMarker;
@@ -490,21 +491,16 @@
             if (!generatedRing) createGeneratedRitualRing();
         };
 
-        fetch('assets/environment/base.glb')
+        fetch('assets/environment/base upgrade.obj')
             .then((response) => {
-                if (!response.ok) throw new Error('Could not load base.glb');
-                return response.arrayBuffer();
+                if (!response.ok) throw new Error('Could not load base upgrade.obj');
+                return response.text();
             })
-            .then(addGlbLayoutToScene)
-            .catch(() => {
-                fetch('assets/environment/base_layout.obj')
-                    .then((response) => {
-                        if (!response.ok) throw new Error('Could not load base_layout.obj');
-                        return response.text();
-                    })
-                    .then(addObjLayoutToScene)
-                    .catch(() => addFallbackBaseLayout());
-            });
+            .then((objText) => {
+                addObjLayoutToScene(objText);
+                createGeneratedRitualRing();
+            })
+            .catch(() => addFallbackBaseLayout());
 
         // --- 4.2 Central Base State ---
         const movementBounds = {
