@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Mobile Game Prototype</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #000;
+            /* Prevent scrolling and pinch-zoom on mobile */
+            touch-action: none;
+        }
+        #game-canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+        /* Joystick overlay */
+        #joystick-zone {
+            position: absolute;
+            bottom: 40px;
+            left: 20px;
+            width: 150px;
+            height: 150px;
+            z-index: 10;
+        }
+        /* Dash Button overlay */
+        #dash-button {
+            position: absolute;
+            bottom: 60px;
+            right: 20px;
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background-color: rgba(255, 255, 255, 0.5);
+            border: 4px solid white;
+            color: white;
+            font-size: 20px;
+            font-family: sans-serif;
+            font-weight: bold;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+            user-select: none;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            /* Ensure fast tap response */
+            touch-action: manipulation;
+        }
+        #dash-button:active {
+            background-color: rgba(255, 255, 255, 0.8);
+            transform: scale(0.95);
+        }
+        /* Slash Button overlay */
+        #slash-button {
+            position: absolute;
+            bottom: 150px;
+            right: 20px;
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            background-color: rgba(255, 100, 100, 0.5);
+            border: 4px solid white;
+            color: white;
+            font-size: 16px;
+            font-family: sans-serif;
+            font-weight: bold;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+            user-select: none;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            touch-action: manipulation;
+        }
+        #slash-button:active {
+            background-color: rgba(255, 100, 100, 0.8);
+            transform: scale(0.95);
+        }
+        /* Zoom Button overlay */
+        #zoom-button {
+            position: absolute;
+            bottom: 240px;
+            right: 20px;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background-color: rgba(100, 100, 255, 0.5);
+            border: 4px solid white;
+            color: white;
+            font-size: 14px;
+            font-family: sans-serif;
+            font-weight: bold;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+            user-select: none;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            touch-action: manipulation;
+        }
+        #zoom-button:active {
+            background-color: rgba(100, 100, 255, 0.8);
+            transform: scale(0.95);
+        }
+        /* Simple HUD */
+        #hud {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: white;
+            font-family: sans-serif;
+            font-size: 16px;
+            z-index: 10;
+            text-shadow: 1px 1px 2px black;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+    <div id="hud">
+        Move with Joystick, DASH & SLASH!<br>
+        <span id="base-health-display" style="color: #ffcccc; font-weight: bold;">Base Health: 100</span>
+    </div>
+    <canvas id="game-canvas"></canvas>
+    <!-- Zone for nipple.js to bind to -->
+    <div id="joystick-zone"></div>
+    <div id="dash-button">DASH</div>
+    <div id="slash-button">SLASH</div>
+    <div id="zoom-button">ZOOM</div>
+
+    <!-- Local dependencies inside vendor folder to avoid network requests -->
+    <script src="vendor/three.min.js"></script>
+    <script src="vendor/nipplejs.min.js"></script>
+    
+    <script>
+        // --- 1. Basic Setup ---
+        const canvas = document.getElementById('game-canvas');
+        
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x000000); // Black color
+        
+        // Use a low FOV perspective camera pulled far back to flatten depth (simulating isometric/orthographic)
+        const camera = new THREE.PerspectiveCamera(20, window.innerWidth / window.innerHeight, 0.1, 1000);
+        // Angle the camera down steeply and pull it back
+        camera.position.set(0, 30, 30);
+        
+        const renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+
+        // --- 3. Character (2D Sprite Billboard) ---
+        // Generating a simple 2D drawing to act as the character texture
+        const createCharacterTexture = () => {
+            const size = 256;
+            const cvs = document.createElement('canvas');
+            cvs.width = size;
+            cvs.height = size;
+            const ctx = cvs.getContext('2d');
+            
+            // Draw a cute stylized character
+            ctx.lineWidth = 6;
+            ctx.strokeStyle = '#000000';
+            
+            // Body/Cloak
+            ctx.fillStyle = '#ff5555';
+            ctx.beginPath();
+            ctx.moveTo(128, 60);
+            ctx.lineTo(190, 220);
+            ctx.lineTo(66, 220);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+            
+            // Head
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath();
+            ctx.arc(128, 100, 50, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+            
+            // Eyes
+            ctx.fillStyle = '#000000';
+            ctx.beginPath();
+            ctx.arc(110, 95, 8, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(146, 95, 8, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Mouth
+            ctx.beginPath();
+            ctx.arc(128, 115, 12, 0, Math.PI);
+            ctx.stroke();
+
+            const texture = new THREE.CanvasTexture(cvs);
+            // Set minFilter to prevent artifacts with transparency
+            texture.minFilter = THREE.LinearFilter;
+            return texture;
+        };
+
+        const charGeometry = new THREE.PlaneGeometry(2, 2);
+        // Use BasicMaterial to avoid 3D shading gradients on the 2D sprite
+        const charMaterial = new THREE.MeshBasicMaterial({ 
+            map: createCharacterTexture(),
+            transparent: true,
+            alphaTest: 0.1, // Discards transparent pixels so depth sorting works nicely
+            side: THREE.DoubleSide
+        });
+        
+        // Group to hold both shadow and character
+        const characterGroup = new THREE.Group();
+        
+        const character = new THREE.Mesh(charGeometry, charMaterial);
+        character.position.y = 1; // Elevate so it sits on floor
+        characterGroup.add(character);
+
+        // Add a blob drop shadow to anchor it in 2.5D space
+        const shadowGeo = new THREE.PlaneGeometry(1.5, 0.6);
+        const shadowMat = new THREE.MeshBasicMaterial({ 
+            color: 0x000000, 
+            transparent: true, 
+            opacity: 0.4 
+        });
+        const dropShadow = new THREE.Mesh(shadowGeo, shadowMat);
+        dropShadow.rotation.x = -Math.PI / 2;
+        dropShadow.position.y = 0.01; // Slightly above ground
+        characterGroup.add(dropShadow);
+
+        scene.add(characterGroup);
+
+        // --- 4. Lighting ---
+        // Since we use MeshBasicMaterial, lights aren't strictly necessary, but kept for future 3D elements
+        const ambientLight = new THREE.AmbientLight(0xffffff, 1.0);
+        scene.add(ambientLight);
+
+        // --- 4.1 Home Base Ground ---
+        const homeGroundGeo = new THREE.PlaneGeometry(24, 24);
+        const homeGroundMat = new THREE.MeshBasicMaterial({ color: 0x26352d });
+        const homeGround = new THREE.Mesh(homeGroundGeo, homeGroundMat);
+        homeGround.rotation.x = -Math.PI / 2;
+        homeGround.position.y = -0.01;
+        scene.add(homeGround);
+
+        // --- 4.2 Central Base ---
+        let baseHealth = 100;
+        const baseHealthDisplay = document.getElementById('base-health-display');
+        
+        const baseGeo = new THREE.CircleGeometry(3, 32);
+        const baseMat = new THREE.MeshBasicMaterial({ color: 0x55aaff });
+        const baseMesh = new THREE.Mesh(baseGeo, baseMat);
+        baseMesh.rotation.x = -Math.PI / 2;
+        baseMesh.position.y = 0.05; // slightly above floor
+        scene.add(baseMesh);
+
+        // --- 4.3 Enemy System ---
+        let enemies = [];
+        let enemySpawnTimer = 0;
+        const enemySpawnInterval = 2.5;
+
+        const createEnemyTexture = () => {
+            const size = 128;
+            const cvs = document.createElement('canvas');
+            cvs.width = size; cvs.height = size;
+            const ctx = cvs.getContext('2d');
+            
+            // Draw a spiky dark blob
+            ctx.fillStyle = '#222';
+            ctx.beginPath();
+            ctx.arc(64, 64, 40, 0, Math.PI * 2);
+            ctx.fill();
+            // simple red eyes
+            ctx.fillStyle = '#f00';
+            ctx.beginPath(); ctx.arc(45, 55, 8, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.arc(83, 55, 8, 0, Math.PI * 2); ctx.fill();
+
+            const tex = new THREE.CanvasTexture(cvs);
+            tex.minFilter = THREE.LinearFilter;
+            return tex;
+        };
+        const enemyMat = new THREE.MeshBasicMaterial({ 
+            map: createEnemyTexture(), transparent: true, alphaTest: 0.1, side: THREE.DoubleSide 
+        });
+
+        const spawnEnemy = () => {
+            const enemyGroup = new THREE.Group();
+            
+            const enemyMesh = new THREE.Mesh(new THREE.PlaneGeometry(1.5, 1.5), enemyMat);
+            enemyMesh.position.y = 0.75;
+            enemyGroup.add(enemyMesh);
+            
+            const eShadow = new THREE.Mesh(shadowGeo, shadowMat);
+            eShadow.rotation.x = -Math.PI / 2; eShadow.position.y = 0.01;
+            enemyGroup.add(eShadow);
+            
+            const angle = Math.random() * Math.PI * 2;
+            const distance = 25; // Spawn off screen
+            enemyGroup.position.set(Math.cos(angle) * distance, 0, Math.sin(angle) * distance);
+            
+            scene.add(enemyGroup);
+            enemies.push({ group: enemyGroup, mesh: enemyMesh, isAttacking: false, attackTimer: 0 });
+        };
+
+        // --- 5. Joystick Controller ---
+        const joystickZone = document.getElementById('joystick-zone');
+        const joystick = nipplejs.create({
+            zone: joystickZone,
+            mode: 'static',
+            position: { left: '50%', top: '50%' },
+            color: 'white',
+            size: 120
+        });
+
+        // Store movement intentions
+        let moveData = {
+            forward: 0,
+            turn: 0
+        };
+
+        joystick.on('move', (evt, data) => {
+            const force = Math.min(data.force, 1);
+            const angle = data.angle.radian;
+            
+            // NippleJS angles: 0 is right, PI/2 is up, PI is left, 3PI/2 is down
+            // Map to 3D movement: 
+            // Up -> move along -Z
+            // Right -> move along +X
+            moveData.forward = Math.sin(angle) * force;
+            moveData.turn = Math.cos(angle) * force;
+        });
+
+        joystick.on('end', () => {
+            moveData.forward = 0;
+            moveData.turn = 0;
+        });
+
+        // --- 5.5 Dash & Slash Logic ---
+        const dashBtn = document.getElementById('dash-button');
+        const slashBtn = document.getElementById('slash-button');
+        
+        let isDashing = false;
+        let dashTimer = 0;
+        let lastMoveDir = { turn: 0, forward: -1 }; 
+
+        const updateLastMoveDir = () => {
+            if (moveData.turn !== 0 || moveData.forward !== 0) {
+                const mag = Math.sqrt(moveData.turn * moveData.turn + moveData.forward * moveData.forward);
+                lastMoveDir.turn = moveData.turn / mag;
+                lastMoveDir.forward = moveData.forward / mag;
+            }
+        };
+
+        const triggerDash = (e) => {
+            e.preventDefault();
+            if (!isDashing) {
+                isDashing = true; dashTimer = 0.2; updateLastMoveDir();
+            }
+        };
+
+        const triggerSlash = (e) => {
+            e.preventDefault();
+            // Destroy any enemy within slash radius of player
+            const slashRadius = 4;
+            for (let i = enemies.length - 1; i >= 0; i--) {
+                const enemy = enemies[i];
+                const dx = characterGroup.position.x - enemy.group.position.x;
+                const dz = characterGroup.position.z - enemy.group.position.z;
+                const dist = Math.sqrt(dx*dx + dz*dz);
+                if (dist <= slashRadius) {
+                    scene.remove(enemy.group);
+                    enemies.splice(i, 1);
+                }
+            }
+        };
+
+        dashBtn.addEventListener('touchstart', triggerDash, { passive: false });
+        dashBtn.addEventListener('mousedown', triggerDash);
+        slashBtn.addEventListener('touchstart', triggerSlash, { passive: false });
+        slashBtn.addEventListener('mousedown', triggerSlash);
+
+        const zoomBtn = document.getElementById('zoom-button');
+        let isZoomingOut = false;
+        const triggerZoomOutStart = (e) => { e.preventDefault(); isZoomingOut = true; };
+        const triggerZoomOutEnd = (e) => { e.preventDefault(); isZoomingOut = false; };
+        
+        zoomBtn.addEventListener('touchstart', triggerZoomOutStart, { passive: false });
+        zoomBtn.addEventListener('mousedown', triggerZoomOutStart);
+        zoomBtn.addEventListener('touchend', triggerZoomOutEnd);
+        zoomBtn.addEventListener('mouseup', triggerZoomOutEnd);
+        zoomBtn.addEventListener('mouseleave', triggerZoomOutEnd);
+
+        // --- 6. Game Loop ---
+        const clock = new THREE.Clock();
+        const moveSpeed = 8; // units per second
+        const enemySpeed = 3;
+        let currentCameraDist = 30;
+
+        function animate() {
+            requestAnimationFrame(animate);
+            const dt = clock.getDelta();
+            
+            // --- Player Movement ---
+            let currentSpeed = moveSpeed;
+            if (isDashing) {
+                dashTimer -= dt;
+                if (dashTimer <= 0) isDashing = false;
+                else currentSpeed = moveSpeed * 4;
+            } else {
+                updateLastMoveDir();
+            }
+
+            if (isDashing) {
+                characterGroup.position.x += lastMoveDir.turn * currentSpeed * dt;
+                characterGroup.position.z -= lastMoveDir.forward * currentSpeed * dt;
+            } else if (moveData.forward !== 0 || moveData.turn !== 0) {
+                characterGroup.position.x += moveData.turn * currentSpeed * dt;
+                characterGroup.position.z -= moveData.forward * currentSpeed * dt;
+            }
+
+            character.quaternion.copy(camera.quaternion);
+
+            // Dash Collision (destroy enemies when dashing into them)
+            if (isDashing) {
+                const dashHitRadius = 2.5;
+                for (let i = enemies.length - 1; i >= 0; i--) {
+                    const enemy = enemies[i];
+                    const dx = characterGroup.position.x - enemy.group.position.x;
+                    const dz = characterGroup.position.z - enemy.group.position.z;
+                    if (Math.sqrt(dx*dx + dz*dz) <= dashHitRadius) {
+                        scene.remove(enemy.group);
+                        enemies.splice(i, 1);
+                    }
+                }
+            }
+
+            // --- Enemy AI & Spawning ---
+            if (baseHealth > 0) {
+                enemySpawnTimer += dt;
+                if (enemySpawnTimer >= enemySpawnInterval) {
+                    spawnEnemy();
+                    enemySpawnTimer = 0;
+                }
+
+                for (let i = enemies.length - 1; i >= 0; i--) {
+                    const enemy = enemies[i];
+                    
+                    // Move towards base at (0, 0, 0)
+                    const ex = enemy.group.position.x;
+                    const ez = enemy.group.position.z;
+                    const distToCenter = Math.sqrt(ex*ex + ez*ez);
+                    
+                    // Billboard enemy mesh
+                    enemy.mesh.quaternion.copy(camera.quaternion);
+
+                    // Check collision with base
+                    if (distToCenter < 3.5) { // base radius + enemy size
+                        enemy.isAttacking = true;
+                    }
+
+                    if (!enemy.isAttacking) {
+                        // Keep moving towards base
+                        if (distToCenter > 0) {
+                            enemy.group.position.x -= (ex / distToCenter) * enemySpeed * dt;
+                            enemy.group.position.z -= (ez / distToCenter) * enemySpeed * dt;
+                        }
+                    } else {
+                        // Enemy is disabled (stopped) and deals small damage over time
+                        enemy.attackTimer += dt;
+                        if (enemy.attackTimer >= 1.0) { // Deal damage every 1 second
+                            baseHealth -= 2; // Small damage amount
+                            baseHealthDisplay.innerText = "Base Health: " + Math.max(0, Math.floor(baseHealth));
+                            enemy.attackTimer = 0;
+                        }
+                    }
+                }
+            } else {
+                baseHealthDisplay.innerText = "Base Destroyed! Game Over.";
+                baseHealthDisplay.style.color = "red";
+            }
+
+            // Zoom camera logic
+            const targetCameraDist = isZoomingOut ? 60 : 30;
+            currentCameraDist += (targetCameraDist - currentCameraDist) * 5 * dt;
+
+            // Make the camera follow the character group
+            camera.position.x = characterGroup.position.x;
+            camera.position.z = characterGroup.position.z + currentCameraDist;
+            camera.position.y = currentCameraDist;
+            camera.lookAt(characterGroup.position);
+
+            renderer.render(scene, camera);
+        }
+
+        animate();
+
+        // --- 7. Window Resize Handling ---
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+</body>
+</html>
