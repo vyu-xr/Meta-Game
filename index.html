@@ -121,7 +121,7 @@
         // Use a low FOV perspective camera pulled far back to flatten depth (simulating isometric/orthographic)
         const camera = new THREE.PerspectiveCamera(24, window.innerWidth / window.innerHeight, 0.1, 1000);
         // Angle the camera down steeply and pull it back
-        camera.position.set(0, 25.5, 18.7);
+        camera.position.set(0, 26.8, 19.6);
         
         const renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
@@ -132,7 +132,7 @@
         const soulTexture = new THREE.TextureLoader().load('assets/character/soul-hero.png');
         soulTexture.minFilter = THREE.LinearFilter;
 
-        const soulHeight = 1.4;
+        const soulHeight = 1.26;
         const soulWidth = soulHeight * (373 / 704);
         const charGeometry = new THREE.PlaneGeometry(soulWidth, soulHeight);
         const charMaterial = new THREE.MeshBasicMaterial({
@@ -634,8 +634,8 @@
         const clock = new THREE.Clock();
         const moveSpeed = 8; // units per second
         const enemySpeed = 3;
-        const cameraHeight = 25.5;
-        const cameraBackDistance = 18.7;
+        const cameraHeight = 26.8;
+        const cameraBackDistance = 19.6;
         const cameraLookAhead = 1.5;
 
         function animate() {
