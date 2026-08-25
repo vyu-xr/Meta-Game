@@ -209,7 +209,7 @@
             if (name.includes('candle')) return layoutMaterials.CandleMarker;
             if (name.includes('stone')) return layoutMaterials.StoneMarker;
             if (name.includes('ring')) return layoutMaterials.RitualRing;
-            if (name.includes('house_base') || name.includes('base_of_house')) return layoutMaterials.HouseBase;
+            if (name.includes('house_base') || name.includes('base_of_house') || name.includes('base of house')) return layoutMaterials.HouseBase;
             if (name.includes('body') || name.includes('protect')) return layoutMaterials.BodyProtect;
 
             return layoutMaterials[materialName] || (isLine ? layoutMaterials.RitualRing : layoutMaterials.Default);
@@ -327,13 +327,153 @@
             });
         };
 
-        fetch('assets/environment/base_layout.obj')
+
+        const createGeneratedRitualRing = () => {
+            const positions = [];
+            const radius = 2.13;
+            const segments = 32;
+            for (let i = 0; i < segments; i++) {
+                const a = (i / segments) * Math.PI * 2;
+                const b = ((i + 1) / segments) * Math.PI * 2;
+                positions.push(Math.cos(a) * radius, 0.03, Math.sin(a) * radius);
+                positions.push(Math.cos(b) * radius, 0.03, Math.sin(b) * radius);
+            }
+
+            const geometry = new THREE.BufferGeometry();
+            geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+            const ring = new THREE.LineSegments(geometry, layoutMaterials.RitualRing);
+            ring.name = 'RITUAL_ring_radius_5_generated';
+            scene.add(ring);
+        };
+
+        const addGlbLayoutToScene = (arrayBuffer) => {
+            const bytes = new Uint8Array(arrayBuffer);
+            const view = new DataView(arrayBuffer);
+            const magic = String.fromCharCode(bytes[0], bytes[1], bytes[2], bytes[3]);
+            if (magic !== 'glTF') throw new Error('Invalid GLB file');
+
+            const jsonLength = view.getUint32(12, true);
+            const jsonType = String.fromCharCode(bytes[16], bytes[17], bytes[18], bytes[19]);
+            if (jsonType !== 'JSON') throw new Error('Missing GLB JSON chunk');
+
+            const jsonText = new TextDecoder().decode(bytes.slice(20, 20 + jsonLength)).trim();
+            const gltf = JSON.parse(jsonText);
+
+            let offset = 20 + jsonLength;
+            let binaryChunk = null;
+            while (offset < bytes.length) {
+                const chunkLength = view.getUint32(offset, true);
+                const chunkType = String.fromCharCode(bytes[offset + 4], bytes[offset + 5], bytes[offset + 6], bytes[offset + 7]);
+                if (chunkType === 'BIN\0') {
+                    binaryChunk = arrayBuffer.slice(offset + 8, offset + 8 + chunkLength);
+                    break;
+                }
+                offset += 8 + chunkLength;
+            }
+            if (!binaryChunk) throw new Error('Missing GLB binary chunk');
+
+            const componentReaders = {
+                5121: { size: 1, read: (dv, at) => dv.getUint8(at) },
+                5123: { size: 2, read: (dv, at) => dv.getUint16(at, true) },
+                5125: { size: 4, read: (dv, at) => dv.getUint32(at, true) },
+                5126: { size: 4, read: (dv, at) => dv.getFloat32(at, true) }
+            };
+            const typeSizes = { SCALAR: 1, VEC2: 2, VEC3: 3, VEC4: 4 };
+
+            const readAccessor = (accessorIndex) => {
+                const accessor = gltf.accessors[accessorIndex];
+                const bufferView = gltf.bufferViews[accessor.bufferView];
+                const reader = componentReaders[accessor.componentType];
+                const itemSize = typeSizes[accessor.type];
+                const stride = bufferView.byteStride || reader.size * itemSize;
+                const start = (bufferView.byteOffset || 0) + (accessor.byteOffset || 0);
+                const dataView = new DataView(binaryChunk);
+                const values = [];
+
+                for (let i = 0; i < accessor.count; i++) {
+                    for (let c = 0; c < itemSize; c++) {
+                        values.push(reader.read(dataView, start + i * stride + c * reader.size));
+                    }
+                }
+
+                return { values, itemSize, componentType: accessor.componentType };
+            };
+
+            const makeIndexArray = (indices) => {
+                if (!indices) return null;
+                if (indices.componentType === 5125) return new Uint32Array(indices.values);
+                return new Uint16Array(indices.values);
+            };
+
+            const nodes = gltf.nodes || [];
+            const sceneNodes = gltf.scenes?.[gltf.scene || 0]?.nodes || nodes.map((_, index) => index);
+            let generatedRing = false;
+
+            sceneNodes.forEach((nodeIndex) => {
+                const node = nodes[nodeIndex];
+                const nodeName = node.name || '';
+                const objectName = nodeName.toLowerCase();
+
+                if (objectName.includes('body') || objectName.includes('protect')) return;
+
+                if (objectName.includes('ring') && node.mesh === undefined) {
+                    createGeneratedRitualRing();
+                    generatedRing = true;
+                    return;
+                }
+
+                if (node.mesh === undefined) return;
+                const meshDef = gltf.meshes[node.mesh];
+
+                meshDef.primitives.forEach((primitive) => {
+                    if (primitive.mode !== undefined && primitive.mode !== 4) return;
+
+                    const positionAccessor = readAccessor(primitive.attributes.POSITION);
+                    const geometry = new THREE.BufferGeometry();
+                    geometry.setAttribute('position', new THREE.Float32BufferAttribute(positionAccessor.values, positionAccessor.itemSize));
+
+                    if (primitive.indices !== undefined) {
+                        geometry.setIndex(new THREE.BufferAttribute(makeIndexArray(readAccessor(primitive.indices)), 1));
+                    }
+
+                    if (primitive.attributes.NORMAL !== undefined) {
+                        const normalAccessor = readAccessor(primitive.attributes.NORMAL);
+                        geometry.setAttribute('normal', new THREE.Float32BufferAttribute(normalAccessor.values, normalAccessor.itemSize));
+                    } else {
+                        geometry.computeVertexNormals();
+                    }
+
+                    const materialName = primitive.material !== undefined ? gltf.materials?.[primitive.material]?.name : '';
+                    const material = getLayoutMaterial({ name: nodeName || meshDef.name || '', material: materialName });
+                    const mesh = new THREE.Mesh(geometry, material);
+                    mesh.name = nodeName || meshDef.name || 'GLB_mesh';
+
+                    if (node.translation) mesh.position.fromArray(node.translation);
+                    if (node.rotation) mesh.quaternion.fromArray(node.rotation);
+                    if (node.scale) mesh.scale.fromArray(node.scale);
+
+                    scene.add(mesh);
+                });
+            });
+
+            if (!generatedRing) createGeneratedRitualRing();
+        };
+
+        fetch('assets/environment/base.glb')
             .then((response) => {
-                if (!response.ok) throw new Error('Could not load base_layout.obj');
-                return response.text();
+                if (!response.ok) throw new Error('Could not load base.glb');
+                return response.arrayBuffer();
             })
-            .then(addObjLayoutToScene)
-            .catch(() => addFallbackBaseLayout());
+            .then(addGlbLayoutToScene)
+            .catch(() => {
+                fetch('assets/environment/base_layout.obj')
+                    .then((response) => {
+                        if (!response.ok) throw new Error('Could not load base_layout.obj');
+                        return response.text();
+                    })
+                    .then(addObjLayoutToScene)
+                    .catch(() => addFallbackBaseLayout());
+            });
 
         // --- 4.2 Central Base State ---
         const movementBounds = {

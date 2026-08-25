@@ -16,3 +16,4 @@
 - Added the sleeping body PNG as a center ritual plane and hid temporary middle body/block layout meshes.
 - Updated base_layout.obj again, removing the extra base circle and mapping the new base_of_house mesh into the scene material setup.
 - Added base.fbx as a source environment asset; runtime still uses OBJ until a browser-ready GLB/OBJ export is provided.
+- Added base.glb as the primary environment layout and implemented a small local GLB mesh loader with OBJ fallback.
