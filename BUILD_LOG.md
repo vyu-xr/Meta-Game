@@ -18,3 +18,4 @@
 - Added base.fbx as a source environment asset; runtime still uses OBJ until a browser-ready GLB/OBJ export is provided.
 - Added base.glb as the primary environment layout and implemented a small local GLB mesh loader with OBJ fallback.
 - Tried a steeper perspective camera pass with FOV 24, height 30, back distance 22, and look-ahead 1.5.
+- Moved the camera closer so the scene reads about 15% larger on mobile and slightly increased the sleeping body plane scale.

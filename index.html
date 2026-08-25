@@ -121,7 +121,7 @@
         // Use a low FOV perspective camera pulled far back to flatten depth (simulating isometric/orthographic)
         const camera = new THREE.PerspectiveCamera(24, window.innerWidth / window.innerHeight, 0.1, 1000);
         // Angle the camera down steeply and pull it back
-        camera.position.set(0, 30, 22);
+        camera.position.set(0, 25.5, 18.7);
         
         const renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
@@ -168,7 +168,7 @@
         const sleepingTexture = new THREE.TextureLoader().load('assets/character/sleep character.png');
         sleepingTexture.minFilter = THREE.LinearFilter;
 
-        const sleepingBodyHeight = 2.25;
+        const sleepingBodyHeight = 2.55;
         const sleepingBodyWidth = sleepingBodyHeight * (433 / 650);
         const sleepingBody = new THREE.Mesh(
             new THREE.PlaneGeometry(sleepingBodyWidth, sleepingBodyHeight),
@@ -634,8 +634,8 @@
         const clock = new THREE.Clock();
         const moveSpeed = 8; // units per second
         const enemySpeed = 3;
-        const cameraHeight = 30;
-        const cameraBackDistance = 22;
+        const cameraHeight = 25.5;
+        const cameraBackDistance = 18.7;
         const cameraLookAhead = 1.5;
 
         function animate() {
