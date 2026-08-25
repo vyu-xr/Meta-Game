@@ -119,9 +119,9 @@
         scene.background = new THREE.Color(0x000000); // Black color
         
         // Use a low FOV perspective camera pulled far back to flatten depth (simulating isometric/orthographic)
-        const camera = new THREE.PerspectiveCamera(20, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const camera = new THREE.PerspectiveCamera(24, window.innerWidth / window.innerHeight, 0.1, 1000);
         // Angle the camera down steeply and pull it back
-        camera.position.set(0, 30, 34);
+        camera.position.set(0, 30, 22);
         
         const renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
@@ -635,8 +635,8 @@
         const moveSpeed = 8; // units per second
         const enemySpeed = 3;
         const cameraHeight = 30;
-        const cameraBackDistance = 34;
-        const cameraLookAhead = 3.5;
+        const cameraBackDistance = 22;
+        const cameraLookAhead = 1.5;
 
         function animate() {
             requestAnimationFrame(animate);
