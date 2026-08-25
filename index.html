@@ -121,7 +121,7 @@
         // Use a low FOV perspective camera pulled far back to flatten depth (simulating isometric/orthographic)
         const camera = new THREE.PerspectiveCamera(20, window.innerWidth / window.innerHeight, 0.1, 1000);
         // Angle the camera down steeply and pull it back
-        camera.position.set(0, 34.5, 34.5);
+        camera.position.set(0, 28, 40);
         
         const renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
@@ -456,7 +456,9 @@
         const clock = new THREE.Clock();
         const moveSpeed = 8; // units per second
         const enemySpeed = 3;
-        let currentCameraDist = 34.5;
+        const cameraHeight = 28;
+        const cameraBackDistance = 40;
+        const cameraLookAhead = 6;
 
         function animate() {
             requestAnimationFrame(animate);
@@ -549,12 +551,15 @@
                 baseHealthDisplay.style.color = "red";
             }
 
-            // Make the camera follow the character group
+            // Frame the player lower on screen and keep more of the ritual area visible ahead.
             camera.position.x = characterGroup.position.x;
-            camera.position.z = characterGroup.position.z + currentCameraDist;
-            camera.position.y = currentCameraDist;
-            camera.lookAt(characterGroup.position);
-
+            camera.position.z = characterGroup.position.z + cameraBackDistance;
+            camera.position.y = cameraHeight;
+            camera.lookAt(
+                characterGroup.position.x,
+                0,
+                characterGroup.position.z - cameraLookAhead
+            );
             renderer.render(scene, camera);
         }
 

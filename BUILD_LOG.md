@@ -9,3 +9,4 @@
 - Replaced the controllable player sprite with the local soul-hero.png asset and added left/right facing flip behavior.
 - Removed the temporary zoom button and moved the virtual joystick upward for better mobile thumb placement.
 - Added player movement limits so the soul stays on the home ground and cannot enter the ritual center.
+- Tuned the camera toward a Cult of the Lamb-style fixed elevated perspective with the player framed lower and more ritual space visible ahead.
