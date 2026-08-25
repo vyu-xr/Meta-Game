@@ -508,7 +508,8 @@
             maxX: 8.8,
             minZ: -11.4,
             maxZ: 11.4,
-            ritualBlockRadius: 2.2
+            ritualBlockRadius: 2.2,
+            backWall: { minX: -4.15, maxX: 4.15, z: -8.45 }
         };
 
         const constrainPlayerToHomeGround = () => {
@@ -524,6 +525,15 @@
                 const pushScale = movementBounds.ritualBlockRadius / distanceFromRitual;
                 characterGroup.position.x *= pushScale;
                 characterGroup.position.z *= pushScale;
+            }
+
+            const wall = movementBounds.backWall;
+            if (
+                characterGroup.position.x >= wall.minX &&
+                characterGroup.position.x <= wall.maxX &&
+                characterGroup.position.z < wall.z
+            ) {
+                characterGroup.position.z = wall.z;
             }
         };
 
