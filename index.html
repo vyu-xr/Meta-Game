@@ -23,7 +23,7 @@
         /* Joystick overlay */
         #joystick-zone {
             position: absolute;
-            bottom: 40px;
+            bottom: 115px;
             left: 20px;
             width: 150px;
             height: 150px;
@@ -82,32 +82,6 @@
             background-color: rgba(255, 100, 100, 0.8);
             transform: scale(0.95);
         }
-        /* Zoom Button overlay */
-        #zoom-button {
-            position: absolute;
-            bottom: 240px;
-            right: 20px;
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
-            background-color: rgba(100, 100, 255, 0.5);
-            border: 4px solid white;
-            color: white;
-            font-size: 14px;
-            font-family: sans-serif;
-            font-weight: bold;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 10;
-            user-select: none;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-            touch-action: manipulation;
-        }
-        #zoom-button:active {
-            background-color: rgba(100, 100, 255, 0.8);
-            transform: scale(0.95);
-        }
         /* Simple HUD */
         #hud {
             position: absolute;
@@ -132,7 +106,6 @@
     <div id="joystick-zone"></div>
     <div id="dash-button">DASH</div>
     <div id="slash-button">SLASH</div>
-    <div id="zoom-button">ZOOM</div>
 
     <!-- Local dependencies inside vendor folder to avoid network requests -->
     <script src="vendor/three.min.js"></script>
@@ -454,17 +427,6 @@
         slashBtn.addEventListener('touchstart', triggerSlash, { passive: false });
         slashBtn.addEventListener('mousedown', triggerSlash);
 
-        const zoomBtn = document.getElementById('zoom-button');
-        let isZoomingOut = false;
-        const triggerZoomOutStart = (e) => { e.preventDefault(); isZoomingOut = true; };
-        const triggerZoomOutEnd = (e) => { e.preventDefault(); isZoomingOut = false; };
-        
-        zoomBtn.addEventListener('touchstart', triggerZoomOutStart, { passive: false });
-        zoomBtn.addEventListener('mousedown', triggerZoomOutStart);
-        zoomBtn.addEventListener('touchend', triggerZoomOutEnd);
-        zoomBtn.addEventListener('mouseup', triggerZoomOutEnd);
-        zoomBtn.addEventListener('mouseleave', triggerZoomOutEnd);
-
         // --- 6. Game Loop ---
         const clock = new THREE.Clock();
         const moveSpeed = 8; // units per second
@@ -559,10 +521,6 @@
                 baseHealthDisplay.innerText = "Base Destroyed! Game Over.";
                 baseHealthDisplay.style.color = "red";
             }
-
-            // Zoom camera logic
-            const targetCameraDist = isZoomingOut ? 69 : 34.5;
-            currentCameraDist += (targetCameraDist - currentCameraDist) * 5 * dt;
 
             // Make the camera follow the character group
             camera.position.x = characterGroup.position.x;

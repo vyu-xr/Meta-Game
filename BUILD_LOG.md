@@ -7,3 +7,4 @@
 - Created a Blender-friendly OBJ base layout template with home ground, center base circle, and six ritual markers on a perfect circular ring.
 - Updated the runtime scene to load the Blender-edited base_layout.obj as the home/base layout.
 - Replaced the controllable player sprite with the local soul-hero.png asset and added left/right facing flip behavior.
+- Removed the temporary zoom button and moved the virtual joystick upward for better mobile thumb placement.
