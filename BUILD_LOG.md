@@ -26,3 +26,4 @@
 - Replaced the flat black background with a dark red radial gradient for a stronger supernatural night atmosphere.
 - Created base-main.glb as a named main base scene asset from the current base GLB.
 - Replaced the runtime base environment with base upgrade.obj and generated the ritual ring in code for the updated layout.
+- Hid the visible home ground mesh while keeping the same movement bounds for the soul.

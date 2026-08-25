@@ -322,7 +322,7 @@
 
             objects.forEach((objectData) => {
                 const objectName = objectData.name.toLowerCase();
-                if (objectName.includes('body') || objectName.includes('protect')) return;
+                if (objectName.includes('body') || objectName.includes('protect') || objectName.includes('home_ground')) return;
 
                 if (objectData.faces.length > 0) {
                     const positions = [];
@@ -446,7 +446,7 @@
                 const nodeName = node.name || '';
                 const objectName = nodeName.toLowerCase();
 
-                if (objectName.includes('body') || objectName.includes('protect')) return;
+                if (objectName.includes('body') || objectName.includes('protect') || objectName.includes('home_ground')) return;
 
                 if (objectName.includes('ring') && node.mesh === undefined) {
                     createGeneratedRitualRing();
