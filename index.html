@@ -145,6 +145,7 @@
         let characterFacing = 1;
         // Group to hold both shadow and character
         const characterGroup = new THREE.Group();
+        characterGroup.position.set(0, 0, 3.1);
         
         const character = new THREE.Mesh(charGeometry, charMaterial);
         character.position.y = 1; // Elevate so it sits on floor
@@ -297,6 +298,30 @@
             .catch(() => addFallbackBaseLayout());
 
         // --- 4.2 Central Base State ---
+        const movementBounds = {
+            minX: -11.2,
+            maxX: 11.2,
+            minZ: -11.2,
+            maxZ: 11.2,
+            ritualBlockRadius: 2.35
+        };
+
+        const constrainPlayerToHomeGround = () => {
+            characterGroup.position.x = THREE.MathUtils.clamp(characterGroup.position.x, movementBounds.minX, movementBounds.maxX);
+            characterGroup.position.z = THREE.MathUtils.clamp(characterGroup.position.z, movementBounds.minZ, movementBounds.maxZ);
+
+            const distanceFromRitual = Math.sqrt(
+                characterGroup.position.x * characterGroup.position.x +
+                characterGroup.position.z * characterGroup.position.z
+            );
+
+            if (distanceFromRitual > 0 && distanceFromRitual < movementBounds.ritualBlockRadius) {
+                const pushScale = movementBounds.ritualBlockRadius / distanceFromRitual;
+                characterGroup.position.x *= pushScale;
+                characterGroup.position.z *= pushScale;
+            }
+        };
+
         let baseHealth = 100;
         const baseHealthDisplay = document.getElementById('base-health-display');
 
@@ -454,6 +479,8 @@
                 characterGroup.position.x += moveData.turn * currentSpeed * dt;
                 characterGroup.position.z -= moveData.forward * currentSpeed * dt;
             }
+
+            constrainPlayerToHomeGround();
 
             const horizontalIntent = isDashing ? lastMoveDir.turn : moveData.turn;
             if (horizontalIntent > 0.05) characterFacing = 1;
