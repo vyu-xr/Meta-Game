@@ -637,7 +637,7 @@
 
         // --- 6. Game Loop ---
         const clock = new THREE.Clock();
-        const moveSpeed = 8; // units per second
+        const moveSpeed = 5; // units per second
         const enemySpeed = 3;
         const cameraHeight = 20.0;
         const cameraBackDistance = 14.1;
@@ -652,7 +652,7 @@
             if (isDashing) {
                 dashTimer -= dt;
                 if (dashTimer <= 0) isDashing = false;
-                else currentSpeed = moveSpeed * 4;
+                else currentSpeed = moveSpeed * 2.8;
             } else {
                 updateLastMoveDir();
             }

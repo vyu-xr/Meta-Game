@@ -21,3 +21,4 @@
 - Moved the camera closer so the scene reads about 15% larger on mobile and slightly increased the sleeping body plane scale.
 - Tuned scale by moving the camera 5% farther out and reducing the controllable soul sprite height by 10%.
 - Tested adaptive mobile FOV camera values with FOV 36/34/32, height 20, back distance 14.1, and look-ahead 2.0.
+- Reduced soul movement speed and dash multiplier to improve mobile control feel.
