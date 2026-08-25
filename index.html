@@ -177,7 +177,25 @@
             CandleMarker: new THREE.MeshBasicMaterial({ color: 0xffbd40, side: THREE.DoubleSide }),
             StoneMarker: new THREE.MeshBasicMaterial({ color: 0x40a2ff, side: THREE.DoubleSide }),
             RitualRing: new THREE.LineBasicMaterial({ color: 0x7dd5ee }),
+            BodyProtect: new THREE.MeshBasicMaterial({ color: 0xeadfd5, side: THREE.DoubleSide }),
+            HouseBase: new THREE.MeshBasicMaterial({ color: 0x4a302d, side: THREE.DoubleSide }),
             Default: new THREE.MeshBasicMaterial({ color: 0xb8c7bd, side: THREE.DoubleSide })
+        };
+        const objLayoutScale = 0.01;
+
+        const getLayoutMaterial = (objectData, isLine = false) => {
+            const name = objectData.name.toLowerCase();
+            const materialName = objectData.material;
+
+            if (name.includes('ground')) return layoutMaterials.Ground;
+            if (name.includes('base_circle')) return layoutMaterials.BaseCircle;
+            if (name.includes('candle')) return layoutMaterials.CandleMarker;
+            if (name.includes('stone')) return layoutMaterials.StoneMarker;
+            if (name.includes('ring')) return layoutMaterials.RitualRing;
+            if (name.includes('house_base')) return layoutMaterials.HouseBase;
+            if (name.includes('body') || name.includes('protect')) return layoutMaterials.BodyProtect;
+
+            return layoutMaterials[materialName] || (isLine ? layoutMaterials.RitualRing : layoutMaterials.Default);
         };
 
         const addFallbackBaseLayout = () => {
@@ -233,7 +251,7 @@
                 }
 
                 if (type === 'v') {
-                    vertices.push(new THREE.Vector3(parseFloat(parts[1]), parseFloat(parts[2]), parseFloat(parts[3])));
+                    vertices.push(new THREE.Vector3(parseFloat(parts[1]) * objLayoutScale, parseFloat(parts[2]) * objLayoutScale, parseFloat(parts[3]) * objLayoutScale));
                     return;
                 }
 
@@ -265,7 +283,7 @@
                     geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
                     geometry.computeVertexNormals();
 
-                    const material = layoutMaterials[objectData.material] || layoutMaterials.Default;
+                    const material = getLayoutMaterial(objectData);
                     const mesh = new THREE.Mesh(geometry, material);
                     mesh.name = objectData.name;
                     scene.add(mesh);
@@ -281,7 +299,7 @@
                     const geometry = new THREE.BufferGeometry();
                     geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
 
-                    const material = layoutMaterials[objectData.material] || layoutMaterials.RitualRing;
+                    const material = getLayoutMaterial(objectData, true);
                     const lineSegments = new THREE.LineSegments(geometry, material);
                     lineSegments.name = objectData.name;
                     scene.add(lineSegments);
@@ -299,11 +317,11 @@
 
         // --- 4.2 Central Base State ---
         const movementBounds = {
-            minX: -11.2,
-            maxX: 11.2,
-            minZ: -11.2,
-            maxZ: 11.2,
-            ritualBlockRadius: 2.35
+            minX: -8.8,
+            maxX: 8.8,
+            minZ: -11.4,
+            maxZ: 11.4,
+            ritualBlockRadius: 2.2
         };
 
         const constrainPlayerToHomeGround = () => {

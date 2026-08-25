@@ -10,3 +10,4 @@
 - Removed the temporary zoom button and moved the virtual joystick upward for better mobile thumb placement.
 - Added player movement limits so the soul stays on the home ground and cannot enter the ritual center.
 - Tuned the camera toward a Cult of the Lamb-style fixed elevated perspective with the player framed lower and more ritual space visible ahead.
+- Updated the Blender base layout asset and adjusted the runtime loader for centimeter-scale OBJ exports and updated floor bounds.
