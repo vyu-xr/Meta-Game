@@ -156,64 +156,20 @@
 
 
         // --- 3. Character (2D Sprite Billboard) ---
-        // Generating a simple 2D drawing to act as the character texture
-        const createCharacterTexture = () => {
-            const size = 256;
-            const cvs = document.createElement('canvas');
-            cvs.width = size;
-            cvs.height = size;
-            const ctx = cvs.getContext('2d');
-            
-            // Draw a cute stylized character
-            ctx.lineWidth = 6;
-            ctx.strokeStyle = '#000000';
-            
-            // Body/Cloak
-            ctx.fillStyle = '#ff5555';
-            ctx.beginPath();
-            ctx.moveTo(128, 60);
-            ctx.lineTo(190, 220);
-            ctx.lineTo(66, 220);
-            ctx.closePath();
-            ctx.fill();
-            ctx.stroke();
-            
-            // Head
-            ctx.fillStyle = '#ffffff';
-            ctx.beginPath();
-            ctx.arc(128, 100, 50, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.stroke();
-            
-            // Eyes
-            ctx.fillStyle = '#000000';
-            ctx.beginPath();
-            ctx.arc(110, 95, 8, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.beginPath();
-            ctx.arc(146, 95, 8, 0, Math.PI * 2);
-            ctx.fill();
-            
-            // Mouth
-            ctx.beginPath();
-            ctx.arc(128, 115, 12, 0, Math.PI);
-            ctx.stroke();
+        const soulTexture = new THREE.TextureLoader().load('assets/character/soul-hero.png');
+        soulTexture.minFilter = THREE.LinearFilter;
 
-            const texture = new THREE.CanvasTexture(cvs);
-            // Set minFilter to prevent artifacts with transparency
-            texture.minFilter = THREE.LinearFilter;
-            return texture;
-        };
-
-        const charGeometry = new THREE.PlaneGeometry(2, 2);
-        // Use BasicMaterial to avoid 3D shading gradients on the 2D sprite
-        const charMaterial = new THREE.MeshBasicMaterial({ 
-            map: createCharacterTexture(),
+        const soulHeight = 2.8;
+        const soulWidth = soulHeight * (373 / 704);
+        const charGeometry = new THREE.PlaneGeometry(soulWidth, soulHeight);
+        const charMaterial = new THREE.MeshBasicMaterial({
+            map: soulTexture,
             transparent: true,
-            alphaTest: 0.1, // Discards transparent pixels so depth sorting works nicely
+            alphaTest: 0.1,
             side: THREE.DoubleSide
         });
-        
+
+        let characterFacing = 1;
         // Group to hold both shadow and character
         const characterGroup = new THREE.Group();
         
@@ -534,6 +490,11 @@
                 characterGroup.position.x += moveData.turn * currentSpeed * dt;
                 characterGroup.position.z -= moveData.forward * currentSpeed * dt;
             }
+
+            const horizontalIntent = isDashing ? lastMoveDir.turn : moveData.turn;
+            if (horizontalIntent > 0.05) characterFacing = 1;
+            if (horizontalIntent < -0.05) characterFacing = -1;
+            character.scale.x = characterFacing;
 
             character.quaternion.copy(camera.quaternion);
 
