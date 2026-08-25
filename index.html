@@ -209,7 +209,7 @@
             if (name.includes('candle')) return layoutMaterials.CandleMarker;
             if (name.includes('stone')) return layoutMaterials.StoneMarker;
             if (name.includes('ring')) return layoutMaterials.RitualRing;
-            if (name.includes('house_base')) return layoutMaterials.HouseBase;
+            if (name.includes('house_base') || name.includes('base_of_house')) return layoutMaterials.HouseBase;
             if (name.includes('body') || name.includes('protect')) return layoutMaterials.BodyProtect;
 
             return layoutMaterials[materialName] || (isLine ? layoutMaterials.RitualRing : layoutMaterials.Default);
@@ -290,7 +290,7 @@
 
             objects.forEach((objectData) => {
                 const objectName = objectData.name.toLowerCase();
-                if (objectName.includes('body') || objectName.includes('protect') || objectData.name === '1') return;
+                if (objectName.includes('body') || objectName.includes('protect')) return;
 
                 if (objectData.faces.length > 0) {
                     const positions = [];
