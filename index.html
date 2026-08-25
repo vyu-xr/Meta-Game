@@ -116,7 +116,33 @@
         const canvas = document.getElementById('game-canvas');
         
         const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0x000000); // Black color
+
+        const createBackgroundTexture = () => {
+            const bgCanvas = document.createElement('canvas');
+            bgCanvas.width = Math.max(512, window.innerWidth);
+            bgCanvas.height = Math.max(512, window.innerHeight);
+            const bgCtx = bgCanvas.getContext('2d');
+            const radius = Math.max(bgCanvas.width, bgCanvas.height) * 0.75;
+            const gradient = bgCtx.createRadialGradient(
+                bgCanvas.width * 0.5,
+                bgCanvas.height * 0.45,
+                0,
+                bgCanvas.width * 0.5,
+                bgCanvas.height * 0.45,
+                radius
+            );
+            gradient.addColorStop(0, '#2a0508');
+            gradient.addColorStop(0.55, '#170306');
+            gradient.addColorStop(1, '#050001');
+            bgCtx.fillStyle = gradient;
+            bgCtx.fillRect(0, 0, bgCanvas.width, bgCanvas.height);
+
+            const texture = new THREE.CanvasTexture(bgCanvas);
+            texture.minFilter = THREE.LinearFilter;
+            return texture;
+        };
+
+        scene.background = createBackgroundTexture();
         
         const getAdaptiveCameraFov = () => {
             const aspect = window.innerWidth / window.innerHeight;
@@ -754,6 +780,7 @@
             camera.fov = getAdaptiveCameraFov();
             camera.updateProjectionMatrix();
             renderer.setSize(window.innerWidth, window.innerHeight);
+            scene.background = createBackgroundTexture();
         });
     </script>
 </body>

@@ -23,3 +23,4 @@
 - Tested adaptive mobile FOV camera values with FOV 36/34/32, height 20, back distance 14.1, and look-ahead 2.0.
 - Reduced soul movement speed and dash multiplier to improve mobile control feel.
 - Moved the camera closer so the scene appears about 7% larger while keeping the soul sprite size unchanged.
+- Replaced the flat black background with a dark red radial gradient for a stronger supernatural night atmosphere.
