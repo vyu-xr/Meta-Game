@@ -24,3 +24,4 @@
 - Reduced soul movement speed and dash multiplier to improve mobile control feel.
 - Moved the camera closer so the scene appears about 7% larger while keeping the soul sprite size unchanged.
 - Replaced the flat black background with a dark red radial gradient for a stronger supernatural night atmosphere.
+- Created base-main.glb as a named main base scene asset from the current base GLB.
