@@ -118,10 +118,15 @@
         const scene = new THREE.Scene();
         scene.background = new THREE.Color(0x000000); // Black color
         
-        // Use a low FOV perspective camera pulled far back to flatten depth (simulating isometric/orthographic)
-        const camera = new THREE.PerspectiveCamera(24, window.innerWidth / window.innerHeight, 0.1, 1000);
-        // Angle the camera down steeply and pull it back
-        camera.position.set(0, 26.8, 19.6);
+        const getAdaptiveCameraFov = () => {
+            const aspect = window.innerWidth / window.innerHeight;
+            if (aspect < 0.55) return 36;
+            if (aspect < 0.75) return 34;
+            return 32;
+        };
+
+        const camera = new THREE.PerspectiveCamera(getAdaptiveCameraFov(), window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(0, 20, 14.1);
         
         const renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
@@ -634,9 +639,9 @@
         const clock = new THREE.Clock();
         const moveSpeed = 8; // units per second
         const enemySpeed = 3;
-        const cameraHeight = 26.8;
-        const cameraBackDistance = 19.6;
-        const cameraLookAhead = 1.5;
+        const cameraHeight = 20.0;
+        const cameraBackDistance = 14.1;
+        const cameraLookAhead = 2.0;
 
         function animate() {
             requestAnimationFrame(animate);
@@ -746,6 +751,7 @@
         // --- 7. Window Resize Handling ---
         window.addEventListener('resize', () => {
             camera.aspect = window.innerWidth / window.innerHeight;
+            camera.fov = getAdaptiveCameraFov();
             camera.updateProjectionMatrix();
             renderer.setSize(window.innerWidth, window.innerHeight);
         });
