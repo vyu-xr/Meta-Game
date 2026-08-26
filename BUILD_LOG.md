@@ -31,3 +31,4 @@
 - Updated the base upgrade environment OBJ/MTL with the latest exported layout asset.
 - Applied the base ground texture asset to the base_ground mesh and extended the OBJ loader to read UV coordinates.
 - Corrected the base ground texture orientation by using the exported OBJ V coordinate directly.
+- Updated the base environment export, mapped base_underground to the ground texture, and skipped newly named disabled helper meshes.

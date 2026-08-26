@@ -241,7 +241,7 @@
             const name = objectData.name.toLowerCase();
             const materialName = objectData.material;
 
-            if (name.includes('base_ground') || name.includes('basefbxasc032offbxasc032house')) return layoutMaterials.BaseGround;
+            if (name.includes('base_ground') || name.includes('base_underground') || name.includes('basefbxasc032offbxasc032house')) return layoutMaterials.BaseGround;
             if (name.includes('ground')) return layoutMaterials.Ground;
             if (name.includes('base_circle')) return layoutMaterials.BaseCircle;
             if (name.includes('candle')) return layoutMaterials.CandleMarker;
@@ -349,7 +349,7 @@
 
             objects.forEach((objectData) => {
                 const objectName = objectData.name.toLowerCase();
-                if (objectName.includes('body') || objectName.includes('protect') || objectName.includes('home_ground')) return;
+                if (objectName.includes('body') || objectName.includes('protect') || objectName.includes('home_ground') || objectName.includes('disable') || objectName.includes('dissable')) return;
 
                 if (objectData.faces.length > 0) {
                     const positions = [];
@@ -481,7 +481,7 @@
                 const nodeName = node.name || '';
                 const objectName = nodeName.toLowerCase();
 
-                if (objectName.includes('body') || objectName.includes('protect') || objectName.includes('home_ground')) return;
+                if (objectName.includes('body') || objectName.includes('protect') || objectName.includes('home_ground') || objectName.includes('disable') || objectName.includes('dissable')) return;
 
                 if (objectName.includes('ring') && node.mesh === undefined) {
                     createGeneratedRitualRing();
