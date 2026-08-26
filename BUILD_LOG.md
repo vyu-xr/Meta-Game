@@ -32,3 +32,4 @@
 - Applied the base ground texture asset to the base_ground mesh and extended the OBJ loader to read UV coordinates.
 - Corrected the base ground texture orientation by using the exported OBJ V coordinate directly.
 - Updated the base environment export, mapped base_underground to the ground texture, and skipped newly named disabled helper meshes.
+- Set the soul's starting position to the player_spown_area(disable_mesh) marker from the base environment OBJ.
