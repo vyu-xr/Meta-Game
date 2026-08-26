@@ -210,7 +210,7 @@
                 side: THREE.DoubleSide
             })
         );
-        sleepingBody.position.set(0, 0.08, 0);
+        sleepingBody.position.set(0, 0.08, 1.011);
         sleepingBody.rotation.x = -Math.PI / 2;
         scene.add(sleepingBody);
         // --- 4. Lighting ---
@@ -398,12 +398,13 @@
         const createGeneratedRitualRing = () => {
             const positions = [];
             const radius = 2.13;
+            const centerZ = 1.011;
             const segments = 32;
             for (let i = 0; i < segments; i++) {
                 const a = (i / segments) * Math.PI * 2;
                 const b = ((i + 1) / segments) * Math.PI * 2;
-                positions.push(Math.cos(a) * radius, 0.03, Math.sin(a) * radius);
-                positions.push(Math.cos(b) * radius, 0.03, Math.sin(b) * radius);
+                positions.push(Math.cos(a) * radius, 0.03, centerZ + Math.sin(a) * radius);
+                positions.push(Math.cos(b) * radius, 0.03, centerZ + Math.sin(b) * radius);
             }
 
             const geometry = new THREE.BufferGeometry();
@@ -544,6 +545,7 @@
             minZ: -11.4,
             maxZ: 11.4,
             ritualBlockRadius: 2.2,
+            ritualCenter: { x: 0, z: 1.011 },
             backWall: { minX: -4.15, maxX: 4.15, z: -8.45 }
         };
 
@@ -551,15 +553,17 @@
             characterGroup.position.x = THREE.MathUtils.clamp(characterGroup.position.x, movementBounds.minX, movementBounds.maxX);
             characterGroup.position.z = THREE.MathUtils.clamp(characterGroup.position.z, movementBounds.minZ, movementBounds.maxZ);
 
+            const ritualDeltaX = characterGroup.position.x - movementBounds.ritualCenter.x;
+            const ritualDeltaZ = characterGroup.position.z - movementBounds.ritualCenter.z;
             const distanceFromRitual = Math.sqrt(
-                characterGroup.position.x * characterGroup.position.x +
-                characterGroup.position.z * characterGroup.position.z
+                ritualDeltaX * ritualDeltaX +
+                ritualDeltaZ * ritualDeltaZ
             );
 
             if (distanceFromRitual > 0 && distanceFromRitual < movementBounds.ritualBlockRadius) {
                 const pushScale = movementBounds.ritualBlockRadius / distanceFromRitual;
-                characterGroup.position.x *= pushScale;
-                characterGroup.position.z *= pushScale;
+                characterGroup.position.x = movementBounds.ritualCenter.x + ritualDeltaX * pushScale;
+                characterGroup.position.z = movementBounds.ritualCenter.z + ritualDeltaZ * pushScale;
             }
 
             const wall = movementBounds.backWall;
