@@ -34,3 +34,4 @@
 - Updated the base environment export, mapped base_underground to the ground texture, and skipped newly named disabled helper meshes.
 - Set the soul's starting position to the player_spown_area(disable_mesh) marker from the base environment OBJ.
 - Aligned the generated ritual ring radius/center and sleeping body protection position to the latest base OBJ markers.
+- Added the home lobby OBJ scene as a second local environment and wired the basement exit collider to switch scenes.

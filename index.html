@@ -236,6 +236,15 @@
             Default: new THREE.MeshBasicMaterial({ color: 0xb8c7bd, side: THREE.DoubleSide })
         };
         const objLayoutScale = 1;
+        const basementGroup = new THREE.Group();
+        basementGroup.name = 'BasementScene';
+        const lobbyGroup = new THREE.Group();
+        lobbyGroup.name = 'HomeLobbyScene';
+        lobbyGroup.visible = false;
+        scene.add(basementGroup);
+        scene.add(lobbyGroup);
+        let activeArea = 'basement';
+        let lobbyReady = false;
 
         const getLayoutMaterial = (objectData, isLine = false) => {
             const name = objectData.name.toLowerCase();
@@ -267,7 +276,7 @@
             scene.add(baseMesh);
         };
 
-        const addObjLayoutToScene = (objText) => {
+        const addObjLayoutToScene = (objText, targetGroup = scene) => {
             const vertices = [];
             const texcoords = [];
             let currentObject = null;
@@ -373,7 +382,7 @@
                     const material = getLayoutMaterial(objectData);
                     const mesh = new THREE.Mesh(geometry, material);
                     mesh.name = objectData.name;
-                    scene.add(mesh);
+                    targetGroup.add(mesh);
                 }
 
                 if (objectData.lines.length > 0) {
@@ -389,13 +398,13 @@
                     const material = getLayoutMaterial(objectData, true);
                     const lineSegments = new THREE.LineSegments(geometry, material);
                     lineSegments.name = objectData.name;
-                    scene.add(lineSegments);
+                    targetGroup.add(lineSegments);
                 }
             });
         };
 
 
-        const createGeneratedRitualRing = () => {
+        const createGeneratedRitualRing = (targetGroup = scene) => {
             const positions = [];
             const radius = 2.13;
             const centerZ = 1.011;
@@ -411,10 +420,10 @@
             geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
             const ring = new THREE.LineSegments(geometry, layoutMaterials.RitualRing);
             ring.name = 'RITUAL_ring_radius_5_generated';
-            scene.add(ring);
+            targetGroup.add(ring);
         };
 
-        const addGlbLayoutToScene = (arrayBuffer) => {
+        const addGlbLayoutToScene = (arrayBuffer, targetGroup = scene) => {
             const bytes = new Uint8Array(arrayBuffer);
             const view = new DataView(arrayBuffer);
             const magic = String.fromCharCode(bytes[0], bytes[1], bytes[2], bytes[3]);
@@ -520,11 +529,11 @@
                     if (node.rotation) mesh.quaternion.fromArray(node.rotation);
                     if (node.scale) mesh.scale.fromArray(node.scale);
 
-                    scene.add(mesh);
+                    targetGroup.add(mesh);
                 });
             });
 
-            if (!generatedRing) createGeneratedRitualRing();
+            if (!generatedRing) createGeneratedRitualRing(targetGroup);
         };
 
         fetch('assets/environment/base upgrade.obj')
@@ -533,46 +542,96 @@
                 return response.text();
             })
             .then((objText) => {
-                addObjLayoutToScene(objText);
-                createGeneratedRitualRing();
+                addObjLayoutToScene(objText, basementGroup);
+                createGeneratedRitualRing(basementGroup);
             })
             .catch(() => addFallbackBaseLayout());
 
+        fetch('assets/environment/home lobby scene.obj')
+            .then((response) => {
+                if (!response.ok) throw new Error('Could not load home lobby scene.obj');
+                return response.text();
+            })
+            .then((objText) => {
+                addObjLayoutToScene(objText, lobbyGroup);
+                lobbyReady = true;
+            });
+
         // --- 4.2 Central Base State ---
-        const movementBounds = {
-            minX: -8.8,
-            maxX: 8.8,
-            minZ: -11.4,
-            maxZ: 11.4,
-            ritualBlockRadius: 2.2,
-            ritualCenter: { x: 0, z: 1.011 },
-            backWall: { minX: -4.15, maxX: 4.15, z: -8.45 }
+        const areaConfigs = {
+            basement: {
+                bounds: { minX: -8.8, maxX: 8.8, minZ: -11.4, maxZ: 11.4 },
+                ritualBlockRadius: 2.2,
+                ritualCenter: { x: 0, z: 1.011 },
+                backWall: { minX: -4.15, maxX: 4.15, z: -8.45 },
+                nextAreaCollider: { minX: -1.939, maxX: 1.945, minZ: 10.384, maxZ: 11.646 }
+            },
+            lobby: {
+                bounds: { minX: -6.639, maxX: 7.892, minZ: -7.935, maxZ: 9.928 },
+                spawn: { x: 4.174, z: -6.832 }
+            }
+        };
+
+        const isPointInsideRect = (point, rect) => (
+            point.x >= rect.minX &&
+            point.x <= rect.maxX &&
+            point.z >= rect.minZ &&
+            point.z <= rect.maxZ
+        );
+
+        const clearEnemies = () => {
+            enemies.forEach((enemy) => scene.remove(enemy.group));
+            enemies = [];
+        };
+
+        const switchArea = (areaName) => {
+            if (activeArea === areaName) return;
+            if (areaName === 'lobby' && !lobbyReady) return;
+
+            activeArea = areaName;
+            basementGroup.visible = areaName === 'basement';
+            lobbyGroup.visible = areaName === 'lobby';
+
+            sleepingBody.visible = areaName === 'basement';
+            baseHealthDisplay.style.display = areaName === 'basement' ? 'block' : 'none';
+
+            if (areaName === 'lobby') {
+                clearEnemies();
+                const spawn = areaConfigs.lobby.spawn;
+                characterGroup.position.set(spawn.x, 0, spawn.z);
+            }
         };
 
         const constrainPlayerToHomeGround = () => {
-            characterGroup.position.x = THREE.MathUtils.clamp(characterGroup.position.x, movementBounds.minX, movementBounds.maxX);
-            characterGroup.position.z = THREE.MathUtils.clamp(characterGroup.position.z, movementBounds.minZ, movementBounds.maxZ);
+            const config = areaConfigs[activeArea];
+            const bounds = config.bounds;
+            characterGroup.position.x = THREE.MathUtils.clamp(characterGroup.position.x, bounds.minX, bounds.maxX);
+            characterGroup.position.z = THREE.MathUtils.clamp(characterGroup.position.z, bounds.minZ, bounds.maxZ);
 
-            const ritualDeltaX = characterGroup.position.x - movementBounds.ritualCenter.x;
-            const ritualDeltaZ = characterGroup.position.z - movementBounds.ritualCenter.z;
-            const distanceFromRitual = Math.sqrt(
-                ritualDeltaX * ritualDeltaX +
-                ritualDeltaZ * ritualDeltaZ
-            );
+            if (config.ritualCenter) {
+                const ritualDeltaX = characterGroup.position.x - config.ritualCenter.x;
+                const ritualDeltaZ = characterGroup.position.z - config.ritualCenter.z;
+                const distanceFromRitual = Math.sqrt(
+                    ritualDeltaX * ritualDeltaX +
+                    ritualDeltaZ * ritualDeltaZ
+                );
 
-            if (distanceFromRitual > 0 && distanceFromRitual < movementBounds.ritualBlockRadius) {
-                const pushScale = movementBounds.ritualBlockRadius / distanceFromRitual;
-                characterGroup.position.x = movementBounds.ritualCenter.x + ritualDeltaX * pushScale;
-                characterGroup.position.z = movementBounds.ritualCenter.z + ritualDeltaZ * pushScale;
+                if (distanceFromRitual > 0 && distanceFromRitual < config.ritualBlockRadius) {
+                    const pushScale = config.ritualBlockRadius / distanceFromRitual;
+                    characterGroup.position.x = config.ritualCenter.x + ritualDeltaX * pushScale;
+                    characterGroup.position.z = config.ritualCenter.z + ritualDeltaZ * pushScale;
+                }
             }
 
-            const wall = movementBounds.backWall;
-            if (
-                characterGroup.position.x >= wall.minX &&
-                characterGroup.position.x <= wall.maxX &&
-                characterGroup.position.z < wall.z
-            ) {
-                characterGroup.position.z = wall.z;
+            if (config.backWall) {
+                const wall = config.backWall;
+                if (
+                    characterGroup.position.x >= wall.minX &&
+                    characterGroup.position.x <= wall.maxX &&
+                    characterGroup.position.z < wall.z
+                ) {
+                    characterGroup.position.z = wall.z;
+                }
             }
         };
 
@@ -738,6 +797,10 @@
 
             constrainPlayerToHomeGround();
 
+            if (activeArea === 'basement' && isPointInsideRect(characterGroup.position, areaConfigs.basement.nextAreaCollider)) {
+                switchArea('lobby');
+            }
+
             const horizontalIntent = isDashing ? lastMoveDir.turn : moveData.turn;
             if (horizontalIntent > 0.05) characterFacing = 1;
             if (horizontalIntent < -0.05) characterFacing = -1;
@@ -760,7 +823,7 @@
             }
 
             // --- Enemy AI & Spawning ---
-            if (baseHealth > 0) {
+            if (activeArea === 'basement' && baseHealth > 0) {
                 enemySpawnTimer += dt;
                 if (enemySpawnTimer >= enemySpawnInterval && totalEnemiesSpawned < maxEnemies) {
                     spawnEnemy();
