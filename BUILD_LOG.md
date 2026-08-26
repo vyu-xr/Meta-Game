@@ -28,3 +28,4 @@
 - Replaced the runtime base environment with base upgrade.obj and generated the ritual ring in code for the updated layout.
 - Hid the visible home ground mesh while keeping the same movement bounds for the soul.
 - Added a player collider for the straight back wall in the base_ground mesh so the soul cannot pass through it.
+- Updated the base upgrade environment OBJ/MTL with the latest exported layout asset.

@@ -1,4 +1,4 @@
-# Blender 5.0.1 MTL File: 'None'
+# Blender 5.0.1 MTL File: 'base2.blend'
 # www.blender.org
 
 newmtl CandleMarker
@@ -31,7 +31,7 @@ Ni 1.500000
 d 1.000000
 illum 1
 
-newmtl baseFBXASC032ofFBXASC032houseSG
+newmtl lambert2SG
 Ns 0.000000
 Ka 1.000000 1.000000 1.000000
 Kd 0.500000 0.500000 0.500000
