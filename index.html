@@ -322,7 +322,7 @@
                 }
 
                 if (type === 'vt') {
-                    texcoords.push({ u: parseFloat(parts[1]), v: 1 - parseFloat(parts[2]) });
+                    texcoords.push({ u: parseFloat(parts[1]), v: parseFloat(parts[2]) });
                     return;
                 }
 
