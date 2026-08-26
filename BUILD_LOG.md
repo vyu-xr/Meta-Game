@@ -29,3 +29,4 @@
 - Hid the visible home ground mesh while keeping the same movement bounds for the soul.
 - Added a player collider for the straight back wall in the base_ground mesh so the soul cannot pass through it.
 - Updated the base upgrade environment OBJ/MTL with the latest exported layout asset.
+- Applied the base ground texture asset to the base_ground mesh and extended the OBJ loader to read UV coordinates.

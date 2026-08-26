@@ -219,6 +219,11 @@
         scene.add(ambientLight);
 
         // --- 4.1 Blender Base Layout ---
+        const baseGroundTexture = new THREE.TextureLoader().load('assets/environment/base ground texture.jpg');
+        baseGroundTexture.minFilter = THREE.LinearFilter;
+        baseGroundTexture.wrapS = THREE.RepeatWrapping;
+        baseGroundTexture.wrapT = THREE.RepeatWrapping;
+
         const layoutMaterials = {
             Ground: new THREE.MeshBasicMaterial({ color: 0x26352d, side: THREE.DoubleSide }),
             BaseCircle: new THREE.MeshBasicMaterial({ color: 0x55aaff, side: THREE.DoubleSide }),
@@ -226,6 +231,7 @@
             StoneMarker: new THREE.MeshBasicMaterial({ color: 0x40a2ff, side: THREE.DoubleSide }),
             RitualRing: new THREE.LineBasicMaterial({ color: 0x7dd5ee }),
             BodyProtect: new THREE.MeshBasicMaterial({ color: 0xeadfd5, side: THREE.DoubleSide }),
+            BaseGround: new THREE.MeshBasicMaterial({ map: baseGroundTexture, side: THREE.DoubleSide }),
             HouseBase: new THREE.MeshBasicMaterial({ color: 0x4a302d, side: THREE.DoubleSide }),
             Default: new THREE.MeshBasicMaterial({ color: 0xb8c7bd, side: THREE.DoubleSide })
         };
@@ -235,7 +241,7 @@
             const name = objectData.name.toLowerCase();
             const materialName = objectData.material;
 
-            if (name.includes('base_ground') || name.includes('basefbxasc032offbxasc032house')) return layoutMaterials.HouseBase;
+            if (name.includes('base_ground') || name.includes('basefbxasc032offbxasc032house')) return layoutMaterials.BaseGround;
             if (name.includes('ground')) return layoutMaterials.Ground;
             if (name.includes('base_circle')) return layoutMaterials.BaseCircle;
             if (name.includes('candle')) return layoutMaterials.CandleMarker;
@@ -263,13 +269,14 @@
 
         const addObjLayoutToScene = (objText) => {
             const vertices = [];
+            const texcoords = [];
             let currentObject = null;
             let currentMaterial = 'Default';
             const objects = [];
 
             const ensureObject = () => {
                 if (!currentObject) {
-                    currentObject = { name: 'OBJ_object', material: currentMaterial, faces: [], lines: [] };
+                    currentObject = { name: 'OBJ_object', material: currentMaterial, faces: [], uvs: [], lines: [] };
                     objects.push(currentObject);
                 }
                 return currentObject;
@@ -280,6 +287,16 @@
                 return rawIndex < 0 ? vertices.length + rawIndex : rawIndex - 1;
             };
 
+            const parseObjToken = (token) => {
+                const values = token.split('/');
+                const vertexIndex = parseInt(values[0], 10);
+                const uvIndex = values[1] ? parseInt(values[1], 10) : 0;
+                return {
+                    vertex: vertexIndex < 0 ? vertices.length + vertexIndex : vertexIndex - 1,
+                    uv: uvIndex ? (uvIndex < 0 ? texcoords.length + uvIndex : uvIndex - 1) : null
+                };
+            };
+
             objText.split(/\r?\n/).forEach((line) => {
                 const trimmed = line.trim();
                 if (!trimmed || trimmed.startsWith('#')) return;
@@ -288,7 +305,7 @@
                 const type = parts[0];
 
                 if (type === 'o' || type === 'g') {
-                    currentObject = { name: parts.slice(1).join(' ') || 'OBJ_object', material: currentMaterial, faces: [], lines: [] };
+                    currentObject = { name: parts.slice(1).join(' ') || 'OBJ_object', material: currentMaterial, faces: [], uvs: [], lines: [] };
                     objects.push(currentObject);
                     return;
                 }
@@ -304,10 +321,20 @@
                     return;
                 }
 
+                if (type === 'vt') {
+                    texcoords.push({ u: parseFloat(parts[1]), v: 1 - parseFloat(parts[2]) });
+                    return;
+                }
+
                 if (type === 'f') {
-                    const indices = parts.slice(1).map(parseVertexIndex);
-                    for (let i = 1; i < indices.length - 1; i++) {
-                        ensureObject().faces.push(indices[0], indices[i], indices[i + 1]);
+                    const tokens = parts.slice(1).map(parseObjToken);
+                    for (let i = 1; i < tokens.length - 1; i++) {
+                        const triangle = [tokens[0], tokens[i], tokens[i + 1]];
+                        const object = ensureObject();
+                        triangle.forEach((token) => object.faces.push(token.vertex));
+                        if (triangle.every((token) => token.uv !== null)) {
+                            triangle.forEach((token) => object.uvs.push(token.uv));
+                        }
                     }
                     return;
                 }
@@ -333,6 +360,14 @@
 
                     const geometry = new THREE.BufferGeometry();
                     geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+                    if (objectData.uvs.length === objectData.faces.length) {
+                        const uvs = [];
+                        objectData.uvs.forEach((index) => {
+                            const uv = texcoords[index];
+                            uvs.push(uv.u, uv.v);
+                        });
+                        geometry.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
+                    }
                     geometry.computeVertexNormals();
 
                     const material = getLayoutMaterial(objectData);
