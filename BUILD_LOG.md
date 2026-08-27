@@ -35,3 +35,11 @@
 - Set the soul's starting position to the player_spown_area(disable_mesh) marker from the base environment OBJ.
 - Aligned the generated ritual ring radius/center and sleeping body protection position to the latest base OBJ markers.
 - Added the home lobby OBJ scene as a second local environment and wired the basement exit collider to switch scenes.
+- Tuned night enemy spirits to spawn from left/right/bottom only, reduced their size, slowed movement, and increased spawn spacing.
+- Added slash attack VFX with a white arc and small hit burst particles when spirits are destroyed.
+- Tightened the slash VFX so it appears close to the soul as a left-to-right curved swipe instead of a distant wave.
+- Changed slash combat from a circular area hit to a joystick-directed cone and rotated the slash VFX toward movement direction.
+- Replaced the procedural slash arc with the 9-frame slash.png spritesheet and sped up the slash animation timing.
+- Added subtle soul wobble and a quick slash pose with lean, squash/stretch, and forward nudge during attacks.
+- Reduced soul wobble and slash lean, removed slash forward nudge, and stopped shadow slash scaling.
+- Further reduced the slash lean and slash squash/stretch on the soul sprite.

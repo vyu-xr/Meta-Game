@@ -117,7 +117,7 @@
         
         const scene = new THREE.Scene();
 
-        const createBackgroundTexture = () => {
+        const createBackgroundTexture = (areaName = 'basement') => {
             const bgCanvas = document.createElement('canvas');
             bgCanvas.width = Math.max(512, window.innerWidth);
             bgCanvas.height = Math.max(512, window.innerHeight);
@@ -131,9 +131,17 @@
                 bgCanvas.height * 0.45,
                 radius
             );
-            gradient.addColorStop(0, '#2a0508');
-            gradient.addColorStop(0.55, '#170306');
-            gradient.addColorStop(1, '#050001');
+
+            if (areaName === 'lobby') {
+                gradient.addColorStop(0, '#3a3a3a');
+                gradient.addColorStop(0.55, '#202020');
+                gradient.addColorStop(1, '#070707');
+            } else {
+                gradient.addColorStop(0, '#2a0508');
+                gradient.addColorStop(0.55, '#170306');
+                gradient.addColorStop(1, '#050001');
+            }
+
             bgCtx.fillStyle = gradient;
             bgCtx.fillRect(0, 0, bgCanvas.width, bgCanvas.height);
 
@@ -142,7 +150,7 @@
             return texture;
         };
 
-        scene.background = createBackgroundTexture();
+        scene.background = createBackgroundTexture('basement');
         
         const getAdaptiveCameraFov = () => {
             const aspect = window.innerWidth / window.innerHeight;
@@ -174,6 +182,10 @@
         });
 
         let characterFacing = 1;
+        let soulAnimTime = 0;
+        let slashPoseTimer = 0;
+        const slashPoseDuration = 0.18;
+        let slashPoseDir = { x: 1, z: 0 };
         // Group to hold both shadow and character
         const characterGroup = new THREE.Group();
         characterGroup.position.set(1.878, 0, -2.815);
@@ -358,7 +370,7 @@
 
             objects.forEach((objectData) => {
                 const objectName = objectData.name.toLowerCase();
-                if (objectName.includes('body') || objectName.includes('protect') || objectName.includes('home_ground') || objectName.includes('disable') || objectName.includes('dissable')) return;
+                if (objectName.includes('body') || objectName.includes('protect') || objectName.includes('disable') || objectName.includes('dissable')) return;
 
                 if (objectData.faces.length > 0) {
                     const positions = [];
@@ -491,7 +503,7 @@
                 const nodeName = node.name || '';
                 const objectName = nodeName.toLowerCase();
 
-                if (objectName.includes('body') || objectName.includes('protect') || objectName.includes('home_ground') || objectName.includes('disable') || objectName.includes('dissable')) return;
+                if (objectName.includes('body') || objectName.includes('protect') || objectName.includes('disable') || objectName.includes('dissable')) return;
 
                 if (objectName.includes('ring') && node.mesh === undefined) {
                     createGeneratedRitualRing();
@@ -594,6 +606,7 @@
 
             sleepingBody.visible = areaName === 'basement';
             baseHealthDisplay.style.display = areaName === 'basement' ? 'block' : 'none';
+            scene.background = createBackgroundTexture(areaName);
 
             if (areaName === 'lobby') {
                 clearEnemies();
@@ -641,7 +654,7 @@
         // --- 4.3 Enemy System ---
         let enemies = [];
         let enemySpawnTimer = 0;
-        const enemySpawnInterval = 0.35;
+        const enemySpawnInterval = 1.4;
         const maxEnemies = 10;
         let totalEnemiesSpawned = 0;
 
@@ -668,21 +681,139 @@
         const enemyMat = new THREE.MeshBasicMaterial({ 
             map: createEnemyTexture(), transparent: true, alphaTest: 0.1, side: THREE.DoubleSide 
         });
+        const slashFrameCount = 9;
+        const slashSpritesheetTexture = new THREE.TextureLoader().load('assets/character/slash.png');
+        slashSpritesheetTexture.repeat.set(1 / slashFrameCount, 1);
+        slashSpritesheetTexture.offset.set(0, 0);
+        slashSpritesheetTexture.minFilter = THREE.LinearFilter;
+        slashSpritesheetTexture.magFilter = THREE.LinearFilter;
 
+        const slashArcMaterial = new THREE.MeshBasicMaterial({
+            map: slashSpritesheetTexture,
+            transparent: true,
+            opacity: 0,
+            depthWrite: false,
+            side: THREE.DoubleSide
+        });
+        const slashArc = new THREE.Mesh(new THREE.PlaneGeometry(1.75, 1.75), slashArcMaterial);
+        slashArc.visible = false;
+        scene.add(slashArc);
+        let slashVfxTimer = 0;
+        const slashVfxDuration = 0.11;
+
+        const hitSparkMaterial = new THREE.MeshBasicMaterial({
+            color: 0xeafcff,
+            transparent: true,
+            opacity: 1,
+            depthWrite: false,
+            side: THREE.DoubleSide
+        });
+        const hitParticles = [];
+
+        const getSlashWorldDirection = () => {
+            const inputX = moveData.turn;
+            const inputZ = -moveData.forward;
+            const inputMag = Math.sqrt(inputX * inputX + inputZ * inputZ);
+            if (inputMag > 0.05) {
+                return { x: inputX / inputMag, z: inputZ / inputMag };
+            }
+
+            const lastX = lastMoveDir.turn;
+            const lastZ = -lastMoveDir.forward;
+            const lastMag = Math.sqrt(lastX * lastX + lastZ * lastZ);
+            if (lastMag > 0.05) {
+                return { x: lastX / lastMag, z: lastZ / lastMag };
+            }
+
+            return { x: characterFacing, z: 0 };
+        };
+
+        const triggerSlashVfx = () => {
+            slashVfxTimer = slashVfxDuration;
+            slashArc.visible = true;
+            slashArcMaterial.opacity = 1;
+            slashSpritesheetTexture.offset.x = 0;
+        };
+
+        const createHitBurst = (position) => {
+            for (let i = 0; i < 8; i++) {
+                const spark = new THREE.Mesh(new THREE.PlaneGeometry(0.12, 0.42), hitSparkMaterial.clone());
+                const angle = (i / 8) * Math.PI * 2 + Math.random() * 0.25;
+                const speed = THREE.MathUtils.randFloat(2.2, 4.2);
+                spark.position.set(position.x, 0.75, position.z);
+                spark.rotation.z = angle;
+                scene.add(spark);
+                hitParticles.push({
+                    mesh: spark,
+                    velocity: { x: Math.cos(angle) * speed, z: Math.sin(angle) * speed },
+                    life: 0.22,
+                    maxLife: 0.22
+                });
+            }
+        };
+
+        const updateSlashVfx = (dt) => {
+            if (slashVfxTimer > 0) {
+                slashVfxTimer = Math.max(0, slashVfxTimer - dt);
+                const progress = 1 - slashVfxTimer / slashVfxDuration;
+                slashArc.visible = true;
+                slashArcMaterial.opacity = 1 - progress * 0.15;
+                const slashFrame = Math.min(slashFrameCount - 1, Math.floor(progress * slashFrameCount));
+                slashSpritesheetTexture.offset.x = slashFrame / slashFrameCount;
+                slashArc.scale.setScalar(0.92 + progress * 0.08);
+                const slashDir = getSlashWorldDirection();
+                const slashAngle = Math.atan2(-slashDir.z, slashDir.x);
+                slashArc.position.set(
+                    characterGroup.position.x + slashDir.x * 0.68,
+                    1.05,
+                    characterGroup.position.z + slashDir.z * 0.68
+                );
+                slashArc.quaternion.copy(camera.quaternion);
+                slashArc.rotateZ(slashAngle);
+            } else {
+                slashArc.visible = false;
+            }
+
+            for (let i = hitParticles.length - 1; i >= 0; i--) {
+                const particle = hitParticles[i];
+                particle.life -= dt;
+                particle.mesh.position.x += particle.velocity.x * dt;
+                particle.mesh.position.z += particle.velocity.z * dt;
+                particle.mesh.position.y += dt * 0.8;
+                particle.mesh.quaternion.copy(camera.quaternion);
+                particle.mesh.material.opacity = Math.max(0, particle.life / particle.maxLife);
+                particle.mesh.scale.setScalar(0.65 + (1 - particle.life / particle.maxLife) * 0.8);
+
+                if (particle.life <= 0) {
+                    scene.remove(particle.mesh);
+                    particle.mesh.material.dispose();
+                    particle.mesh.geometry.dispose();
+                    hitParticles.splice(i, 1);
+                }
+            }
+        };
         const spawnEnemy = () => {
             const enemyGroup = new THREE.Group();
             
-            const enemyMesh = new THREE.Mesh(new THREE.PlaneGeometry(1.5, 1.5), enemyMat);
-            enemyMesh.position.y = 0.75;
+            const enemyMesh = new THREE.Mesh(new THREE.PlaneGeometry(0.9, 0.9), enemyMat);
+            enemyMesh.position.y = 0.45;
             enemyGroup.add(enemyMesh);
             
             const eShadow = new THREE.Mesh(shadowGeo, shadowMat);
             eShadow.rotation.x = -Math.PI / 2; eShadow.position.y = 0.01;
             enemyGroup.add(eShadow);
             
-            const angle = Math.random() * Math.PI * 2;
-            const distance = 25; // Spawn off screen
-            enemyGroup.position.set(Math.cos(angle) * distance, 0, Math.sin(angle) * distance);
+            const spawnSide = Math.floor(Math.random() * 3);
+            const spawnZ = THREE.MathUtils.randFloat(-5.5, 12.5);
+            const spawnX = THREE.MathUtils.randFloat(-8.5, 8.5);
+
+            if (spawnSide === 0) {
+                enemyGroup.position.set(-13, 0, spawnZ);
+            } else if (spawnSide === 1) {
+                enemyGroup.position.set(13, 0, spawnZ);
+            } else {
+                enemyGroup.position.set(spawnX, 0, 15);
+            }
             
             scene.add(enemyGroup);
             enemies.push({ group: enemyGroup, mesh: enemyMesh, isAttacking: false, attackTimer: 0 });
@@ -746,14 +877,24 @@
 
         const triggerSlash = (e) => {
             e.preventDefault();
-            // Destroy any enemy within slash radius of player
-            const slashRadius = 4;
+            updateLastMoveDir();
+            const slashDir = getSlashWorldDirection();
+            slashPoseTimer = slashPoseDuration;
+            slashPoseDir = slashDir;
+            triggerSlashVfx();
+
+            const slashRange = 2.8;
+            const slashHalfAngle = Math.cos(THREE.MathUtils.degToRad(58));
             for (let i = enemies.length - 1; i >= 0; i--) {
                 const enemy = enemies[i];
-                const dx = characterGroup.position.x - enemy.group.position.x;
-                const dz = characterGroup.position.z - enemy.group.position.z;
-                const dist = Math.sqrt(dx*dx + dz*dz);
-                if (dist <= slashRadius) {
+                const dx = enemy.group.position.x - characterGroup.position.x;
+                const dz = enemy.group.position.z - characterGroup.position.z;
+                const dist = Math.sqrt(dx * dx + dz * dz);
+                if (dist <= 0 || dist > slashRange) continue;
+
+                const dot = (dx / dist) * slashDir.x + (dz / dist) * slashDir.z;
+                if (dot >= slashHalfAngle) {
+                    createHitBurst(enemy.group.position);
                     scene.remove(enemy.group);
                     enemies.splice(i, 1);
                 }
@@ -768,7 +909,7 @@
         // --- 6. Game Loop ---
         const clock = new THREE.Clock();
         const moveSpeed = 5; // units per second
-        const enemySpeed = 3;
+        const enemySpeed = 2.3;
         const cameraHeight = 18.7;
         const cameraBackDistance = 13.2;
         const cameraLookAhead = 2.0;
@@ -804,9 +945,28 @@
             const horizontalIntent = isDashing ? lastMoveDir.turn : moveData.turn;
             if (horizontalIntent > 0.05) characterFacing = 1;
             if (horizontalIntent < -0.05) characterFacing = -1;
-            character.scale.x = characterFacing;
+
+            soulAnimTime += dt;
+            slashPoseTimer = Math.max(0, slashPoseTimer - dt);
+            const isMoving = Math.abs(moveData.forward) > 0.05 || Math.abs(moveData.turn) > 0.05 || isDashing;
+            const wobbleSpeed = isMoving ? 10 : 5.5;
+            const wobble = Math.sin(soulAnimTime * wobbleSpeed);
+            const slashPoseProgress = slashPoseTimer > 0 ? 1 - slashPoseTimer / slashPoseDuration : 1;
+            const slashPoseStrength = slashPoseTimer > 0 ? Math.sin(slashPoseProgress * Math.PI) : 0;
+            const soulTilt = wobble * (isMoving ? 0.012 : 0.007);
+            const slashTilt = slashPoseStrength * (0.045 * characterFacing + slashPoseDir.x * 0.018);
+
+            character.position.set(
+                0,
+                1 + wobble * (isMoving ? 0.012 : 0.007) + slashPoseStrength * 0.025,
+                0
+            );
+            character.scale.x = characterFacing * (1 + slashPoseStrength * 0.025);
+            character.scale.y = 1 + wobble * 0.01 + slashPoseStrength * 0.02;
 
             character.quaternion.copy(camera.quaternion);
+            character.rotateZ(soulTilt + slashTilt);
+            updateSlashVfx(dt);
 
             // Dash Collision (destroy enemies when dashing into them)
             if (isDashing) {
@@ -816,6 +976,7 @@
                     const dx = characterGroup.position.x - enemy.group.position.x;
                     const dz = characterGroup.position.z - enemy.group.position.z;
                     if (Math.sqrt(dx*dx + dz*dz) <= dashHitRadius) {
+                        createHitBurst(enemy.group.position);
                         scene.remove(enemy.group);
                         enemies.splice(i, 1);
                     }
@@ -888,7 +1049,7 @@
             camera.fov = getAdaptiveCameraFov();
             camera.updateProjectionMatrix();
             renderer.setSize(window.innerWidth, window.innerHeight);
-            scene.background = createBackgroundTexture();
+            scene.background = createBackgroundTexture(activeArea);
         });
     </script>
 </body>
