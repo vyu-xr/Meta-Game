@@ -43,3 +43,7 @@
 - Added subtle soul wobble and a quick slash pose with lean, squash/stretch, and forward nudge during attacks.
 - Reduced soul wobble and slash lean, removed slash forward nudge, and stopped shadow slash scaling.
 - Further reduced the slash lean and slash squash/stretch on the soul sprite.
+- Re-applied combat notes: shorter three-hit slash combo, enemy HP/knockback, slash recovery, and ghost windup telegraphs.
+- Added enemy body collision so the soul cannot overlap ghosts during normal movement, while dash attacks still pass through for hits.
+- Tuned soul/enemy collision radius lower and added ghost-to-ghost separation to reduce visual overlap.
+- Tuned soul/enemy collision radius lower and added ghost-to-ghost separation to reduce visual overlap.

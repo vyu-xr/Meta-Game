@@ -699,6 +699,8 @@
         slashArc.visible = false;
         scene.add(slashArc);
         let slashVfxTimer = 0;
+        let slashVfxStep = 1;
+        let slashVfxDir = { x: 1, z: 0 };
         const slashVfxDuration = 0.11;
 
         const hitSparkMaterial = new THREE.MeshBasicMaterial({
@@ -728,7 +730,9 @@
             return { x: characterFacing, z: 0 };
         };
 
-        const triggerSlashVfx = () => {
+        const triggerSlashVfx = (comboStep = 1, slashDir = getSlashWorldDirection()) => {
+            slashVfxStep = comboStep;
+            slashVfxDir = slashDir;
             slashVfxTimer = slashVfxDuration;
             slashArc.visible = true;
             slashArcMaterial.opacity = 1;
@@ -760,13 +764,13 @@
                 slashArcMaterial.opacity = 1 - progress * 0.15;
                 const slashFrame = Math.min(slashFrameCount - 1, Math.floor(progress * slashFrameCount));
                 slashSpritesheetTexture.offset.x = slashFrame / slashFrameCount;
-                slashArc.scale.setScalar(0.92 + progress * 0.08);
-                const slashDir = getSlashWorldDirection();
+                slashArc.scale.setScalar((0.74 + slashVfxStep * 0.08) + progress * 0.06);
+                const slashDir = slashVfxDir;
                 const slashAngle = Math.atan2(-slashDir.z, slashDir.x);
                 slashArc.position.set(
-                    characterGroup.position.x + slashDir.x * 0.68,
+                    characterGroup.position.x + slashDir.x * (0.48 + slashVfxStep * 0.08),
                     1.05,
-                    characterGroup.position.z + slashDir.z * 0.68
+                    characterGroup.position.z + slashDir.z * (0.48 + slashVfxStep * 0.08)
                 );
                 slashArc.quaternion.copy(camera.quaternion);
                 slashArc.rotateZ(slashAngle);
@@ -795,7 +799,7 @@
         const spawnEnemy = () => {
             const enemyGroup = new THREE.Group();
             
-            const enemyMesh = new THREE.Mesh(new THREE.PlaneGeometry(0.9, 0.9), enemyMat);
+            const enemyMesh = new THREE.Mesh(new THREE.PlaneGeometry(0.9, 0.9), enemyMat.clone());
             enemyMesh.position.y = 0.45;
             enemyGroup.add(enemyMesh);
             
@@ -816,7 +820,7 @@
             }
             
             scene.add(enemyGroup);
-            enemies.push({ group: enemyGroup, mesh: enemyMesh, isAttacking: false, attackTimer: 0 });
+            enemies.push({ group: enemyGroup, mesh: enemyMesh, hp: 3, state: 'chase', windupTimer: 0, attackTimer: 0, stunTimer: 0, knockback: { x: 0, z: 0 } });
         };
 
         // --- 5. Joystick Controller ---
@@ -858,6 +862,11 @@
         
         let isDashing = false;
         let dashTimer = 0;
+        let comboStep = 0;
+        let comboTimer = 0;
+        const comboResetTime = 0.62;
+        const slashRecoveryTime = 0.12;
+        let slashRecoveryTimer = 0;
         let lastMoveDir = { turn: 0, forward: -1 }; 
 
         const updateLastMoveDir = () => {
@@ -875,16 +884,79 @@
             }
         };
 
+        const damageEnemy = (enemy, index, slashDir, damage, knockbackPower) => {
+            enemy.hp -= damage;
+            enemy.stunTimer = 0.22;
+            enemy.state = 'chase';
+            enemy.windupTimer = 0;
+            enemy.attackTimer = 0;
+            enemy.knockback.x = slashDir.x * knockbackPower;
+            enemy.knockback.z = slashDir.z * knockbackPower;
+            enemy.mesh.material.color.setHex(0xffffff);
+            createHitBurst(enemy.group.position);
+
+            if (enemy.hp <= 0) {
+                scene.remove(enemy.group);
+                enemy.mesh.material.dispose();
+                enemies.splice(index, 1);
+            }
+        };
+
+        const resolvePlayerEnemyCollision = () => {
+            if (isDashing) return;
+
+            const blockRadius = 0.58;
+            enemies.forEach((enemy) => {
+                const dx = characterGroup.position.x - enemy.group.position.x;
+                const dz = characterGroup.position.z - enemy.group.position.z;
+                const dist = Math.sqrt(dx * dx + dz * dz);
+                if (dist >= blockRadius) return;
+
+                const pushX = dist > 0.001 ? dx / dist : -lastMoveDir.turn;
+                const pushZ = dist > 0.001 ? dz / dist : lastMoveDir.forward;
+                const pushAmount = blockRadius - Math.max(dist, 0.001);
+                characterGroup.position.x += pushX * pushAmount;
+                characterGroup.position.z += pushZ * pushAmount;
+            });
+        };
+
+        const resolveEnemyEnemyCollision = () => {
+            const enemyBlockRadius = 0.72;
+            for (let i = 0; i < enemies.length; i++) {
+                for (let j = i + 1; j < enemies.length; j++) {
+                    const a = enemies[i].group;
+                    const b = enemies[j].group;
+                    const dx = a.position.x - b.position.x;
+                    const dz = a.position.z - b.position.z;
+                    const dist = Math.sqrt(dx * dx + dz * dz);
+                    if (dist >= enemyBlockRadius) continue;
+
+                    const nx = dist > 0.001 ? dx / dist : 1;
+                    const nz = dist > 0.001 ? dz / dist : 0;
+                    const push = (enemyBlockRadius - Math.max(dist, 0.001)) * 0.5;
+                    a.position.x += nx * push;
+                    a.position.z += nz * push;
+                    b.position.x -= nx * push;
+                    b.position.z -= nz * push;
+                }
+            }
+        };
         const triggerSlash = (e) => {
             e.preventDefault();
             updateLastMoveDir();
             const slashDir = getSlashWorldDirection();
+            comboStep = comboTimer > 0 ? (comboStep % 3) + 1 : 1;
+            comboTimer = comboResetTime;
+            slashRecoveryTimer = slashRecoveryTime;
             slashPoseTimer = slashPoseDuration;
             slashPoseDir = slashDir;
-            triggerSlashVfx();
+            triggerSlashVfx(comboStep, slashDir);
 
-            const slashRange = 2.8;
-            const slashHalfAngle = Math.cos(THREE.MathUtils.degToRad(58));
+            const slashRange = comboStep === 3 ? 2.05 : 1.72;
+            const slashHalfAngle = Math.cos(THREE.MathUtils.degToRad(comboStep === 3 ? 46 : 36));
+            const slashDamage = comboStep === 3 ? 2 : 1;
+            const knockbackPower = comboStep === 3 ? 5.8 : 3.8;
+
             for (let i = enemies.length - 1; i >= 0; i--) {
                 const enemy = enemies[i];
                 const dx = enemy.group.position.x - characterGroup.position.x;
@@ -894,9 +966,7 @@
 
                 const dot = (dx / dist) * slashDir.x + (dz / dist) * slashDir.z;
                 if (dot >= slashHalfAngle) {
-                    createHitBurst(enemy.group.position);
-                    scene.remove(enemy.group);
-                    enemies.splice(i, 1);
+                    damageEnemy(enemy, i, slashDir, slashDamage, knockbackPower);
                 }
             }
         };
@@ -917,9 +987,11 @@
         function animate() {
             requestAnimationFrame(animate);
             const dt = clock.getDelta();
+            comboTimer = Math.max(0, comboTimer - dt);
+            slashRecoveryTimer = Math.max(0, slashRecoveryTimer - dt);
             
             // --- Player Movement ---
-            let currentSpeed = moveSpeed;
+            let currentSpeed = slashRecoveryTimer > 0 ? moveSpeed * 0.62 : moveSpeed;
             if (isDashing) {
                 dashTimer -= dt;
                 if (dashTimer <= 0) isDashing = false;
@@ -936,6 +1008,8 @@
                 characterGroup.position.z -= moveData.forward * currentSpeed * dt;
             }
 
+            constrainPlayerToHomeGround();
+            resolvePlayerEnemyCollision();
             constrainPlayerToHomeGround();
 
             if (activeArea === 'basement' && isPointInsideRect(characterGroup.position, areaConfigs.basement.nextAreaCollider)) {
@@ -982,7 +1056,6 @@
                     }
                 }
             }
-
             // --- Enemy AI & Spawning ---
             if (activeArea === 'basement' && baseHealth > 0) {
                 enemySpawnTimer += dt;
@@ -992,39 +1065,67 @@
                     enemySpawnTimer = 0;
                 }
 
+
+                resolveEnemyEnemyCollision();
+
                 for (let i = enemies.length - 1; i >= 0; i--) {
                     const enemy = enemies[i];
-                    
-                    // Move towards base at (0, 0, 0)
                     const ex = enemy.group.position.x;
                     const ez = enemy.group.position.z;
-                    const distToCenter = Math.sqrt(ex*ex + ez*ez);
-                    
-                    // Billboard enemy mesh
+                    const distToCenter = Math.sqrt(ex * ex + ez * ez);
+
                     enemy.mesh.quaternion.copy(camera.quaternion);
 
-                    // Check collision with base
-                    if (distToCenter < 3.5) { // base radius + enemy size
-                        enemy.isAttacking = true;
+                    if (enemy.stunTimer > 0) {
+                        enemy.stunTimer -= dt;
+                        enemy.group.position.x += enemy.knockback.x * dt;
+                        enemy.group.position.z += enemy.knockback.z * dt;
+                        const damp = Math.max(0, 1 - dt * 5.5);
+                        enemy.knockback.x *= damp;
+                        enemy.knockback.z *= damp;
+                        enemy.mesh.material.color.setHex(0xffffff);
+                        continue;
                     }
 
-                    if (!enemy.isAttacking) {
-                        // Keep moving towards base
-                        if (distToCenter > 0) {
-                            enemy.group.position.x -= (ex / distToCenter) * enemySpeed * dt;
-                            enemy.group.position.z -= (ez / distToCenter) * enemySpeed * dt;
-                        }
-                    } else {
-                        // Enemy is disabled (stopped) and deals small damage over time
-                        enemy.attackTimer += dt;
-                        if (enemy.attackTimer >= 1.0) { // Deal damage every 1 second
-                            baseHealth -= 2; // Small damage amount
-                            baseHealthDisplay.innerText = "Base Health: " + Math.max(0, Math.floor(baseHealth));
+                    if (enemy.state === 'windup') {
+                        enemy.windupTimer -= dt;
+                        enemy.mesh.material.color.setHex(0xff9a9a);
+                        const pulse = 1 + Math.sin(enemy.windupTimer * 45) * 0.08;
+                        enemy.mesh.scale.set(pulse, pulse, 1);
+                        if (enemy.windupTimer <= 0) {
+                            enemy.state = 'attack';
                             enemy.attackTimer = 0;
+                            enemy.mesh.scale.set(1, 1, 1);
                         }
+                        continue;
+                    }
+
+                    if (enemy.state === 'attack') {
+                        enemy.mesh.material.color.setHex(0xff5b70);
+                        enemy.attackTimer -= dt;
+                        if (enemy.attackTimer <= 0) {
+                            baseHealth -= 2;
+                            baseHealthDisplay.innerText = "Base Health: " + Math.max(0, Math.floor(baseHealth));
+                            enemy.attackTimer = 0.95;
+                        }
+                        if (distToCenter > 4.2) {
+                            enemy.state = 'chase';
+                        }
+                        continue;
+                    }
+
+                    enemy.mesh.material.color.setHex(0xffffff);
+                    enemy.mesh.scale.set(1, 1, 1);
+                    if (distToCenter < 3.35) {
+                        enemy.state = 'windup';
+                        enemy.windupTimer = 0.42;
+                        enemy.attackTimer = 0;
+                    } else if (distToCenter > 0) {
+                        enemy.group.position.x -= (ex / distToCenter) * enemySpeed * dt;
+                        enemy.group.position.z -= (ez / distToCenter) * enemySpeed * dt;
                     }
                 }
-            } else {
+            } else if (activeArea === 'basement') {
                 baseHealthDisplay.innerText = "Base Destroyed! Game Over.";
                 baseHealthDisplay.style.color = "red";
             }
