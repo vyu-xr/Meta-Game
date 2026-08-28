@@ -47,3 +47,20 @@
 - Added enemy body collision so the soul cannot overlap ghosts during normal movement, while dash attacks still pass through for hits.
 - Tuned soul/enemy collision radius lower and added ghost-to-ghost separation to reduce visual overlap.
 - Tuned soul/enemy collision radius lower and added ghost-to-ghost separation to reduce visual overlap.
+- Replaced the generated basic ghost texture with the new drifter ghost PNG asset while keeping current ghost behavior.
+- Slowed drifter ghost movement and flipped ghost sprites horizontally based on travel direction.
+- Reversed drifter ghost horizontal facing so its sprite matches the intended travel direction.
+- Removed dash damage from ghosts and increased slash attack gap so combat timing is less spammy.
+- Tuned Drifter ritual attacks to warn, deal one damage tick, then pause before the next warning.
+- Aligned Drifter ritual attack distance to the shifted ritual center and cancelled attacks when knockback pushes ghosts away.
+- Organized ghost definitions into named Drifter and Skitter sections, then switched the active spawned ghost to Skitter.
+- Added Skitter-specific zig-zag movement settings and rotate-to-move ghost orientation flags.
+- Gave Skitter a zig-zag chase path and rotated its bullet-like sprite toward its travel direction.
+- Updated Skitter ritual behavior so it damages the circle twice, then destroys itself automatically.
+- Sharpened Skitter zig-zag movement with wider dart lanes and corrected its bullet-style travel rotation.
+- Fixed Skitter facing so its rotated sprite no longer flips left/right during zig-zag turns.
+- Increased Skitter zig-zag spacing by about 50%, slightly raised speed, and flipped its travel alignment so the tail trails behind.
+- Set Skitter zig-zag spacing to 2 and ritual damage to 2.5 per hit for a higher circle threat.
+- Increased Skitter speed to 2.8, zig-zag spacing to 2.2, and added close-range slash forgiveness for point-blank enemies.
+- Added short combat camera shake for successful slash hits and ritual circle impacts.
+- Increased combat camera shake strength slightly so hit feedback is easier to notice during testing.

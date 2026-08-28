@@ -657,30 +657,56 @@
         const enemySpawnInterval = 1.4;
         const maxEnemies = 10;
         let totalEnemiesSpawned = 0;
-
-        const createEnemyTexture = () => {
-            const size = 128;
-            const cvs = document.createElement('canvas');
-            cvs.width = size; cvs.height = size;
-            const ctx = cvs.getContext('2d');
-            
-            // Draw a spiky dark blob
-            ctx.fillStyle = '#222';
-            ctx.beginPath();
-            ctx.arc(64, 64, 40, 0, Math.PI * 2);
-            ctx.fill();
-            // simple red eyes
-            ctx.fillStyle = '#f00';
-            ctx.beginPath(); ctx.arc(45, 55, 8, 0, Math.PI * 2); ctx.fill();
-            ctx.beginPath(); ctx.arc(83, 55, 8, 0, Math.PI * 2); ctx.fill();
-
-            const tex = new THREE.CanvasTexture(cvs);
-            tex.minFilter = THREE.LinearFilter;
-            return tex;
+        const loadGhostTexture = (path) => {
+            const texture = new THREE.TextureLoader().load(path);
+            texture.minFilter = THREE.LinearFilter;
+            return texture;
         };
-        const enemyMat = new THREE.MeshBasicMaterial({ 
-            map: createEnemyTexture(), transparent: true, alphaTest: 0.1, side: THREE.DoubleSide 
-        });
+
+        const ghostTypes = {
+            drifter: {
+                name: 'Drifter Ghost',
+                texture: loadGhostTexture('assets/character/ghostt/drifter ghost.png'),
+                width: 0.9,
+                height: 0.9,
+                hp: 3,
+                speed: 1.85,
+                contactRadius: 0.58,
+                separationRadius: 0.72,
+                ritualEnterRadius: 3.35,
+                ritualCancelRadius: 3.55,
+                windupTime: 0.5,
+                cooldownTime: 1.2,
+                ritualDamage: 2,
+                maxRitualHits: null,
+                zigzagAmplitude: 0,
+                zigzagFrequency: 0,
+                rotateToMove: false,
+                travelRotationOffset: 0
+            },
+            skitter: {
+                name: 'Skitter Ghost',
+                texture: loadGhostTexture('assets/character/ghostt/skitter ghost.png'),
+                width: 0.72,
+                height: 0.72,
+                hp: 2,
+                speed: 2.8,
+                contactRadius: 0.48,
+                separationRadius: 0.62,
+                ritualEnterRadius: 3.2,
+                ritualCancelRadius: 3.45,
+                windupTime: 0.38,
+                cooldownTime: 1.05,
+                ritualDamage: 2.5,
+                maxRitualHits: 2,
+                zigzagAmplitude: 2.2,
+                zigzagFrequency: 5.2,
+                rotateToMove: true,
+                travelRotationOffset: 0
+            }
+        };
+        const activeGhostTypeId = 'skitter';
+        const activeGhostType = ghostTypes[activeGhostTypeId];
         const slashFrameCount = 9;
         const slashSpritesheetTexture = new THREE.TextureLoader().load('assets/character/slash.png');
         slashSpritesheetTexture.repeat.set(1 / slashFrameCount, 1);
@@ -796,11 +822,23 @@
                 }
             }
         };
+        const setEnemyVisualScale = (enemy, visualScale = 1) => {
+            const facingScale = enemy.type.rotateToMove ? 1 : enemy.facing;
+            enemy.mesh.scale.set(facingScale * visualScale, visualScale, 1);
+        };
+
         const spawnEnemy = () => {
             const enemyGroup = new THREE.Group();
             
-            const enemyMesh = new THREE.Mesh(new THREE.PlaneGeometry(0.9, 0.9), enemyMat.clone());
-            enemyMesh.position.y = 0.45;
+            const ghostType = activeGhostType;
+            const enemyMat = new THREE.MeshBasicMaterial({
+                map: ghostType.texture,
+                transparent: true,
+                alphaTest: 0.1,
+                side: THREE.DoubleSide
+            });
+            const enemyMesh = new THREE.Mesh(new THREE.PlaneGeometry(ghostType.width, ghostType.height), enemyMat);
+            enemyMesh.position.y = ghostType.height * 0.5;
             enemyGroup.add(enemyMesh);
             
             const eShadow = new THREE.Mesh(shadowGeo, shadowMat);
@@ -820,7 +858,7 @@
             }
             
             scene.add(enemyGroup);
-            enemies.push({ group: enemyGroup, mesh: enemyMesh, hp: 3, state: 'chase', windupTimer: 0, attackTimer: 0, stunTimer: 0, knockback: { x: 0, z: 0 } });
+            enemies.push({ type: ghostType, group: enemyGroup, mesh: enemyMesh, hp: ghostType.hp, state: 'chase', facing: 1, age: 0, zigzagPhase: Math.random() * Math.PI * 2, ritualHits: 0, windupTimer: 0, attackCooldownTimer: 0, attackTimer: 0, stunTimer: 0, knockback: { x: 0, z: 0 } });
         };
 
         // --- 5. Joystick Controller ---
@@ -865,7 +903,7 @@
         let comboStep = 0;
         let comboTimer = 0;
         const comboResetTime = 0.62;
-        const slashRecoveryTime = 0.12;
+        const slashRecoveryTime = 0.2;
         let slashRecoveryTimer = 0;
         let lastMoveDir = { turn: 0, forward: -1 }; 
 
@@ -884,32 +922,39 @@
             }
         };
 
+        const destroyEnemy = (enemy, index) => {
+            scene.remove(enemy.group);
+            enemy.mesh.material.dispose();
+            enemies.splice(index, 1);
+        };
+
         const damageEnemy = (enemy, index, slashDir, damage, knockbackPower) => {
             enemy.hp -= damage;
             enemy.stunTimer = 0.22;
             enemy.state = 'chase';
             enemy.windupTimer = 0;
             enemy.attackTimer = 0;
+            enemy.attackCooldownTimer = 0;
             enemy.knockback.x = slashDir.x * knockbackPower;
             enemy.knockback.z = slashDir.z * knockbackPower;
             enemy.mesh.material.color.setHex(0xffffff);
             createHitBurst(enemy.group.position);
+            triggerScreenShake(comboStep === 3 ? 0.3 : 0.2, comboStep === 3 ? 0.15 : 0.11);
 
             if (enemy.hp <= 0) {
-                scene.remove(enemy.group);
-                enemy.mesh.material.dispose();
-                enemies.splice(index, 1);
+                destroyEnemy(enemy, index);
             }
         };
 
         const resolvePlayerEnemyCollision = () => {
             if (isDashing) return;
 
-            const blockRadius = 0.58;
+            const defaultBlockRadius = activeGhostType.contactRadius;
             enemies.forEach((enemy) => {
                 const dx = characterGroup.position.x - enemy.group.position.x;
                 const dz = characterGroup.position.z - enemy.group.position.z;
                 const dist = Math.sqrt(dx * dx + dz * dz);
+                const blockRadius = enemy.type?.contactRadius || defaultBlockRadius;
                 if (dist >= blockRadius) return;
 
                 const pushX = dist > 0.001 ? dx / dist : -lastMoveDir.turn;
@@ -921,7 +966,7 @@
         };
 
         const resolveEnemyEnemyCollision = () => {
-            const enemyBlockRadius = 0.72;
+            const defaultEnemyBlockRadius = activeGhostType.separationRadius;
             for (let i = 0; i < enemies.length; i++) {
                 for (let j = i + 1; j < enemies.length; j++) {
                     const a = enemies[i].group;
@@ -929,6 +974,7 @@
                     const dx = a.position.x - b.position.x;
                     const dz = a.position.z - b.position.z;
                     const dist = Math.sqrt(dx * dx + dz * dz);
+                    const enemyBlockRadius = Math.max(enemies[i].type?.separationRadius || defaultEnemyBlockRadius, enemies[j].type?.separationRadius || defaultEnemyBlockRadius);
                     if (dist >= enemyBlockRadius) continue;
 
                     const nx = dist > 0.001 ? dx / dist : 1;
@@ -943,6 +989,7 @@
         };
         const triggerSlash = (e) => {
             e.preventDefault();
+            if (slashRecoveryTimer > 0) return;
             updateLastMoveDir();
             const slashDir = getSlashWorldDirection();
             comboStep = comboTimer > 0 ? (comboStep % 3) + 1 : 1;
@@ -956,6 +1003,7 @@
             const slashHalfAngle = Math.cos(THREE.MathUtils.degToRad(comboStep === 3 ? 46 : 36));
             const slashDamage = comboStep === 3 ? 2 : 1;
             const knockbackPower = comboStep === 3 ? 5.8 : 3.8;
+            const closeSlashRadius = 0.72;
 
             for (let i = enemies.length - 1; i >= 0; i--) {
                 const enemy = enemies[i];
@@ -965,7 +1013,7 @@
                 if (dist <= 0 || dist > slashRange) continue;
 
                 const dot = (dx / dist) * slashDir.x + (dz / dist) * slashDir.z;
-                if (dot >= slashHalfAngle) {
+                if (dist <= closeSlashRadius || dot >= slashHalfAngle) {
                     damageEnemy(enemy, i, slashDir, slashDamage, knockbackPower);
                 }
             }
@@ -979,10 +1027,18 @@
         // --- 6. Game Loop ---
         const clock = new THREE.Clock();
         const moveSpeed = 5; // units per second
-        const enemySpeed = 2.3;
         const cameraHeight = 18.7;
         const cameraBackDistance = 13.2;
         const cameraLookAhead = 2.0;
+        let screenShakeTimer = 0;
+        let screenShakeDuration = 0;
+        let screenShakeStrength = 0;
+
+        const triggerScreenShake = (strength = 0.12, duration = 0.1) => {
+            screenShakeStrength = Math.max(screenShakeStrength, strength);
+            screenShakeDuration = Math.max(screenShakeDuration, duration);
+            screenShakeTimer = Math.max(screenShakeTimer, duration);
+        };
 
         function animate() {
             requestAnimationFrame(animate);
@@ -1041,21 +1097,6 @@
             character.quaternion.copy(camera.quaternion);
             character.rotateZ(soulTilt + slashTilt);
             updateSlashVfx(dt);
-
-            // Dash Collision (destroy enemies when dashing into them)
-            if (isDashing) {
-                const dashHitRadius = 2.5;
-                for (let i = enemies.length - 1; i >= 0; i--) {
-                    const enemy = enemies[i];
-                    const dx = characterGroup.position.x - enemy.group.position.x;
-                    const dz = characterGroup.position.z - enemy.group.position.z;
-                    if (Math.sqrt(dx*dx + dz*dz) <= dashHitRadius) {
-                        createHitBurst(enemy.group.position);
-                        scene.remove(enemy.group);
-                        enemies.splice(i, 1);
-                    }
-                }
-            }
             // --- Enemy AI & Spawning ---
             if (activeArea === 'basement' && baseHealth > 0) {
                 enemySpawnTimer += dt;
@@ -1070,9 +1111,13 @@
 
                 for (let i = enemies.length - 1; i >= 0; i--) {
                     const enemy = enemies[i];
+                    enemy.age += dt;
                     const ex = enemy.group.position.x;
                     const ez = enemy.group.position.z;
-                    const distToCenter = Math.sqrt(ex * ex + ez * ez);
+                    const ritualTarget = areaConfigs.basement.ritualCenter;
+                    const toRitualX = ex - ritualTarget.x;
+                    const toRitualZ = ez - ritualTarget.z;
+                    const distToCenter = Math.sqrt(toRitualX * toRitualX + toRitualZ * toRitualZ);
 
                     enemy.mesh.quaternion.copy(camera.quaternion);
 
@@ -1088,56 +1133,106 @@
                     }
 
                     if (enemy.state === 'windup') {
+                        if (distToCenter > enemy.type.ritualCancelRadius) {
+                            enemy.state = 'chase';
+                            enemy.mesh.material.color.setHex(0xffffff);
+                            setEnemyVisualScale(enemy, 1);
+                            continue;
+                        }
                         enemy.windupTimer -= dt;
                         enemy.mesh.material.color.setHex(0xff9a9a);
                         const pulse = 1 + Math.sin(enemy.windupTimer * 45) * 0.08;
-                        enemy.mesh.scale.set(pulse, pulse, 1);
+                        setEnemyVisualScale(enemy, pulse);
                         if (enemy.windupTimer <= 0) {
-                            enemy.state = 'attack';
-                            enemy.attackTimer = 0;
-                            enemy.mesh.scale.set(1, 1, 1);
-                        }
-                        continue;
-                    }
-
-                    if (enemy.state === 'attack') {
-                        enemy.mesh.material.color.setHex(0xff5b70);
-                        enemy.attackTimer -= dt;
-                        if (enemy.attackTimer <= 0) {
-                            baseHealth -= 2;
+                            baseHealth -= enemy.type.ritualDamage;
                             baseHealthDisplay.innerText = "Base Health: " + Math.max(0, Math.floor(baseHealth));
-                            enemy.attackTimer = 0.95;
-                        }
-                        if (distToCenter > 4.2) {
-                            enemy.state = 'chase';
+                            triggerScreenShake(0.28, 0.14);
+                            enemy.ritualHits++;
+                            if (enemy.type.maxRitualHits && enemy.ritualHits >= enemy.type.maxRitualHits) {
+                                createHitBurst(enemy.group.position);
+                                destroyEnemy(enemy, i);
+                                continue;
+                            }
+                            enemy.state = 'cooldown';
+                            enemy.attackCooldownTimer = enemy.type.cooldownTime;
+                            enemy.mesh.material.color.setHex(0xff5b70);
+                            setEnemyVisualScale(enemy, 1);
                         }
                         continue;
                     }
 
+                    if (enemy.state === 'cooldown') {
+                        enemy.attackCooldownTimer -= dt;
+                        enemy.mesh.material.color.setHex(0xbb6d88);
+                        if (distToCenter > enemy.type.ritualCancelRadius) {
+                            enemy.state = 'chase';
+                        } else if (enemy.attackCooldownTimer <= 0) {
+                            enemy.state = 'windup';
+                            enemy.windupTimer = enemy.type.windupTime;
+                        }
+                        continue;
+                    }
                     enemy.mesh.material.color.setHex(0xffffff);
-                    enemy.mesh.scale.set(1, 1, 1);
-                    if (distToCenter < 3.35) {
+                    setEnemyVisualScale(enemy, 1);
+                    if (distToCenter < enemy.type.ritualEnterRadius) {
                         enemy.state = 'windup';
-                        enemy.windupTimer = 0.42;
+                        enemy.windupTimer = enemy.type.windupTime;
                         enemy.attackTimer = 0;
                     } else if (distToCenter > 0) {
-                        enemy.group.position.x -= (ex / distToCenter) * enemySpeed * dt;
-                        enemy.group.position.z -= (ez / distToCenter) * enemySpeed * dt;
+                        const directX = -(toRitualX / distToCenter);
+                        const directZ = -(toRitualZ / distToCenter);
+                        const weaveAmplitude = enemy.type.zigzagAmplitude || 0;
+                        const weaveFrequency = enemy.type.zigzagFrequency || 0;
+                        const weaveTime = enemy.age * weaveFrequency + enemy.zigzagPhase;
+                        const weavePhase = ((weaveTime / (Math.PI * 2)) % 1 + 1) % 1;
+                        const sharpWeave = weavePhase < 0.5 ? -1 : 1;
+                        const turnBlend = Math.min(1, Math.abs(weavePhase - 0.5) * 10 + 0.35);
+                        const weave = sharpWeave * weaveAmplitude * turnBlend;
+                        let moveX = directX + (-directZ) * weave;
+                        let moveZ = directZ + directX * weave;
+                        const moveMag = Math.sqrt(moveX * moveX + moveZ * moveZ);
+                        if (moveMag > 0) {
+                            moveX /= moveMag;
+                            moveZ /= moveMag;
+                        }
+
+                        if (!enemy.type.rotateToMove && Math.abs(moveX) > 0.05) {
+                            enemy.facing = moveX < 0 ? -1 : 1;
+                        }
+                        setEnemyVisualScale(enemy, 1);
+                        if (enemy.type.rotateToMove) {
+                            enemy.mesh.rotation.z = Math.atan2(-moveZ, moveX) + (enemy.type.travelRotationOffset || 0);
+                        }
+                        enemy.group.position.x += moveX * enemy.type.speed * dt;
+                        enemy.group.position.z += moveZ * enemy.type.speed * dt;
                     }
                 }
             } else if (activeArea === 'basement') {
                 baseHealthDisplay.innerText = "Base Destroyed! Game Over.";
                 baseHealthDisplay.style.color = "red";
             }
+            let shakeX = 0;
+            let shakeZ = 0;
+            if (screenShakeTimer > 0) {
+                screenShakeTimer = Math.max(0, screenShakeTimer - dt);
+                const shakeFalloff = screenShakeDuration > 0 ? screenShakeTimer / screenShakeDuration : 0;
+                const shakeAmount = screenShakeStrength * shakeFalloff * shakeFalloff;
+                shakeX = (Math.random() * 2 - 1) * shakeAmount;
+                shakeZ = (Math.random() * 2 - 1) * shakeAmount;
+                if (screenShakeTimer <= 0) {
+                    screenShakeStrength = 0;
+                    screenShakeDuration = 0;
+                }
+            }
 
             // Frame the player lower on screen and keep more of the ritual area visible ahead.
-            camera.position.x = characterGroup.position.x;
-            camera.position.z = characterGroup.position.z + cameraBackDistance;
+            camera.position.x = characterGroup.position.x + shakeX;
+            camera.position.z = characterGroup.position.z + cameraBackDistance + shakeZ;
             camera.position.y = cameraHeight;
             camera.lookAt(
-                characterGroup.position.x,
+                characterGroup.position.x + shakeX * 0.35,
                 0,
-                characterGroup.position.z - cameraLookAhead
+                characterGroup.position.z - cameraLookAhead + shakeZ * 0.35
             );
             renderer.render(scene, camera);
         }
