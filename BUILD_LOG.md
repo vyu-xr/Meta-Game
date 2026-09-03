@@ -108,3 +108,37 @@
 - Increased the ritual scene vignette, moved the basement spawn closer to the ritual circle, and added soft white ritual dust particles.
 - Reduced the radial background gradient radius by 20 percent to make the ritual scene center glow tighter.
 - Darkened the outer ritual background gradient to focus attention on the center ritual area.
+- Added the ritual circle PNG as a transparent plane in the basement ritual scene for visual testing.
+- Converted the ritual circle test image into procedural Three.js pieces: double rings, six sockets, connector bars, red under-glow, and pulse-ready animation hooks.
+- Tuned the procedural ritual circle to use thinner, softer floor-like strokes, smaller sockets, shorter connector bars, and a subtler red under-glow.
+- Removed procedural ritual connector bars and darkened the socket fill circles for a cleaner floor-mark look.
+- Added fire pot props to the three candle sockets with subtle dark floor-shadow overlays and light idle bobbing.
+- Added fire pot sprites to the three candle sockets with darker floor-shadow overlays and subtle billboard bobbing.
+- Hid the yellow/blue OBJ candle and stone placement marker boxes while keeping the procedural ritual node circles visible.
+- Reduced the procedural ritual circle size and thinned the ring/socket strokes for a cleaner floor-mark scale.
+- Reduced the controllable soul character size by 10 percent for better ritual-scene scale.
+- Saved the current approved main camera angle and follow settings in CAMERA_REFERENCE.md.
+- Added a test TALK button that smoothly toggles a 15 percent closer cinematic dialogue camera and locks player movement while active.
+- Added a night-start intro cinematic: black opening, close ritual/body camera on glowing eyes, pullback, soul reveal, and handoff to normal follow camera before enemies spawn.
+- Updated the night intro so it starts from full black, fades the ritual body eyes open, and keeps the eye glow visible during night combat.
+- Fixed the night intro black start by making the fade overlay active in the initial HTML instead of fading to black after load.
+- Slowed the night intro fade-out and delayed the glowing-eyes reveal for a clearer dark-to-awake moment.
+- Changed the intro eye-glow timing so the eyes open only after the black fade is about 90 percent complete.
+- Refreshed/verified the sleeping character body art used for the closed-eye ritual body layer.
+- Added local cache-busting query strings to the sleeping body and eye-glow textures so updated character art reloads during testing.
+- Tuned the intro eye-glow reveal to start earlier and fade in more slowly.
+- Set up two starter night waves: Wave 1 uses five Drifters, and Wave 2 mixes four Drifters with three Skitters using paced spawning.
+- Updated night wave progression so Wave 2 waits until all Wave 1 ghosts are cleared before starting.
+- Changed Wave 1 to spawn ten Drifters with randomized timing, and Wave 2 now starts after the Wave 1 spawn count completes instead of waiting for all enemies to be killed.
+- Retuned enemy spawning with reference-inspired pressure batches: ghosts now arrive in random 1-3 enemy bursts, and a dark wave gesture plays before Wave 2.
+- Retuned starter waves so Wave 1 announces after the intro, spawns slower, and Wave 2 waits until all Wave 1 ghosts are killed before showing its gesture and spawning.
+- Fixed wave over-spawning by preventing spawn batches once a wave's ghost list is exhausted.
+- Made Wave 2 harder with a larger Drifter/Skitter mix and added a final 'You Survived The Night' gesture after all two-wave enemies are cleared.
+- Added a short night-clear pause before the final survive gesture and faded the ritual body's eye glow closed after the two starter waves are cleared.
+- Added the local eight-frame first-wave fire spritesheet and made Candle A light with a looping flame animation after Wave 1 is cleared.
+- Tuned the first candle flame placement, removed the temporary glow helper, and kept the approved animated fire sprite position.
+- Changed Candle A from placement-test visibility to ritual progression: it now stays off at night start, then scales and fades on after the first night is survived.
+- Adjusted first-night completion timing so Candle A begins lighting during the post-clear pause before the final survive message appears.
+- Bumped the Candle A fire texture cache version and added a render-loop visibility failsafe so the lit candle remains enabled after night clear.
+- Refreshed the updated home lobby scene OBJ and verified its spawn/map/basement marker positions against the current area config.
+- Applied the Home Lobby room 2 base texture to the room2_base_ OBJ object using the exported UVs.

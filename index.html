@@ -82,6 +82,30 @@
             background-color: rgba(255, 100, 100, 0.8);
             transform: scale(0.95);
         }
+        #cinematic-button {
+            position: absolute;
+            bottom: 235px;
+            right: 24px;
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            background-color: rgba(120, 190, 255, 0.42);
+            border: 3px solid rgba(255, 255, 255, 0.86);
+            color: white;
+            font-size: 14px;
+            font-family: sans-serif;
+            font-weight: bold;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+            user-select: none;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.34);
+            touch-action: manipulation;
+        }
+        #cinematic-button.active {
+            background-color: rgba(255, 225, 140, 0.62);
+        }
         /* Simple HUD */
         #hud {
             position: absolute;
@@ -195,6 +219,44 @@
         #scene-vignette.ritual-active {
             opacity: 1;
         }
+        #wave-gesture {
+            position: absolute;
+            inset: 0;
+            z-index: 62;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            pointer-events: none;
+            opacity: 0;
+            background: radial-gradient(circle at 50% 47%, rgba(0, 0, 0, 0.08) 18%, rgba(0, 0, 0, 0.5) 72%, rgba(0, 0, 0, 0.82) 100%);
+        }
+        #wave-gesture.active {
+            animation: waveGesturePulse 2.1s ease both;
+        }
+        #wave-gesture-label {
+            color: rgba(236, 244, 255, 0.88);
+            font-family: sans-serif;
+            font-size: 28px;
+            font-weight: bold;
+            letter-spacing: 0;
+            text-shadow: 0 0 14px rgba(255, 255, 255, 0.36), 0 2px 8px rgba(0, 0, 0, 0.8);
+            transform: scale(0.92);
+        }
+        #wave-gesture.active #wave-gesture-label {
+            animation: waveLabelDrift 2.1s ease both;
+        }
+        @keyframes waveGesturePulse {
+            0% { opacity: 0; }
+            22% { opacity: 1; }
+            72% { opacity: 0.86; }
+            100% { opacity: 0; }
+        }
+        @keyframes waveLabelDrift {
+            0% { opacity: 0; transform: scale(0.86) translateY(12px); }
+            28% { opacity: 1; transform: scale(1) translateY(0); }
+            76% { opacity: 0.92; transform: scale(1.02) translateY(-2px); }
+            100% { opacity: 0; transform: scale(1.08) translateY(-10px); }
+        }
         #fade-overlay {
             position: absolute;
             inset: 0;
@@ -202,7 +264,7 @@
             opacity: 0;
             pointer-events: none;
             z-index: 70;
-            transition: opacity 0.38s ease;
+            transition: opacity 0.72s ease;
         }
         #fade-overlay.active {
             opacity: 1;
@@ -272,11 +334,13 @@
         </div>
     </div>
     <div id="scene-vignette" class="ritual-active"></div>
-    <div id="fade-overlay"></div>
+    <div id="wave-gesture" aria-hidden="true"><div id="wave-gesture-label"></div></div>
+    <div id="fade-overlay" class="active"></div>
     <!-- Zone for nipple.js to bind to -->
     <div id="joystick-zone"></div>
     <div id="dash-button">DASH</div>
     <div id="slash-button">SLASH</div>
+    <div id="cinematic-button">TALK</div>
 
     <!-- Local dependencies inside vendor folder to avoid network requests -->
     <script src="vendor/three.min.js"></script>
@@ -342,7 +406,7 @@
         const soulTexture = new THREE.TextureLoader().load('assets/character/soul-hero.png');
         soulTexture.minFilter = THREE.LinearFilter;
 
-        const soulHeight = 1.26;
+        const soulHeight = 1.134;
         const soulWidth = soulHeight * (373 / 704);
         const charGeometry = new THREE.PlaneGeometry(soulWidth, soulHeight);
         const charMaterial = new THREE.MeshBasicMaterial({
@@ -379,7 +443,7 @@
 
         scene.add(characterGroup);
 
-        const sleepingTexture = new THREE.TextureLoader().load('assets/character/sleep character.png');
+        const sleepingTexture = new THREE.TextureLoader().load('assets/character/sleep character.png?v=20260903a');
         sleepingTexture.minFilter = THREE.LinearFilter;
 
         const sleepingBodyHeight = 2.55;
@@ -396,6 +460,23 @@
         sleepingBody.position.set(0, 0.08, 1.011);
         sleepingBody.rotation.x = -Math.PI / 2;
         scene.add(sleepingBody);
+        const eyeGlowTexture = new THREE.TextureLoader().load('assets/character/character eyes glow.png?v=20260903a');
+        eyeGlowTexture.minFilter = THREE.LinearFilter;
+        const eyeGlowBody = new THREE.Mesh(
+            new THREE.PlaneGeometry(sleepingBodyWidth, sleepingBodyHeight),
+            new THREE.MeshBasicMaterial({
+                map: eyeGlowTexture,
+                transparent: true,
+                opacity: 0,
+                alphaTest: 0.08,
+                depthWrite: false,
+                side: THREE.DoubleSide
+            })
+        );
+        eyeGlowBody.position.set(0, 0.11, 1.011);
+        eyeGlowBody.rotation.x = -Math.PI / 2;
+        eyeGlowBody.renderOrder = 6;
+        scene.add(eyeGlowBody);
         // --- 4. Lighting ---
         // Since we use MeshBasicMaterial, lights aren't strictly necessary, but kept for future 3D elements
         const ambientLight = new THREE.AmbientLight(0xffffff, 1.0);
@@ -406,6 +487,11 @@
         baseGroundTexture.minFilter = THREE.LinearFilter;
         baseGroundTexture.wrapS = THREE.RepeatWrapping;
         baseGroundTexture.wrapT = THREE.RepeatWrapping;
+        const room2BaseTexture = new THREE.TextureLoader().load('assets/environment/Home%20lobby%20asset%20and%20texture/room%202%20base%20texture.jpg?v=20260903a');
+        room2BaseTexture.minFilter = THREE.LinearFilter;
+        room2BaseTexture.magFilter = THREE.LinearFilter;
+        room2BaseTexture.wrapS = THREE.ClampToEdgeWrapping;
+        room2BaseTexture.wrapT = THREE.ClampToEdgeWrapping;
 
         const layoutMaterials = {
             Ground: new THREE.MeshBasicMaterial({ color: 0x26352d, side: THREE.DoubleSide }),
@@ -415,6 +501,7 @@
             RitualRing: new THREE.LineBasicMaterial({ color: 0x7dd5ee }),
             BodyProtect: new THREE.MeshBasicMaterial({ color: 0xeadfd5, side: THREE.DoubleSide }),
             BaseGround: new THREE.MeshBasicMaterial({ map: baseGroundTexture, side: THREE.DoubleSide }),
+            Room2Base: new THREE.MeshBasicMaterial({ map: room2BaseTexture, side: THREE.DoubleSide }),
             HouseBase: new THREE.MeshBasicMaterial({ color: 0x4a302d, side: THREE.DoubleSide }),
             ShopSand: new THREE.MeshBasicMaterial({ color: 0xb88f64, side: THREE.DoubleSide }),
             CircusGround: new THREE.MeshBasicMaterial({ color: 0x6f4a68, side: THREE.DoubleSide }),
@@ -441,10 +528,114 @@
         let shopReady = false;
         let circusReady = false;
 
+        const ritualCircleTexture = new THREE.TextureLoader().load('assets/environment/circle ritual.png');
+        ritualCircleTexture.minFilter = THREE.LinearFilter;
+        ritualCircleTexture.magFilter = THREE.LinearFilter;
+        const ritualCirclePlane = new THREE.Mesh(
+            new THREE.PlaneGeometry(4.9, 4.9),
+            new THREE.MeshBasicMaterial({
+                map: ritualCircleTexture,
+                transparent: true,
+                alphaTest: 0.05,
+                depthWrite: false,
+                side: THREE.DoubleSide
+            })
+        );
+        ritualCirclePlane.name = 'RITUAL_circle_texture_plane';
+        ritualCirclePlane.rotation.x = -Math.PI / 2;
+        ritualCirclePlane.position.set(0, 0.028, 1.011);
+        ritualCirclePlane.renderOrder = 1;
+        basementGroup.add(ritualCirclePlane);
+        ritualCirclePlane.visible = false;
+
+        const ritualShapeParts = { rings: [], sockets: [], bars: [], redEnergy: [], firePots: [], ritualFires: [] };
+        const ritualState = { candleAFlameLit: false };
+        const ritualShapeGroup = new THREE.Group();
+        ritualShapeGroup.name = 'RITUAL_procedural_shape_group';
+        ritualShapeGroup.position.set(0, 0, 1.011);
+        basementGroup.add(ritualShapeGroup);
+
+        const ritualGoldMaterial = new THREE.MeshBasicMaterial({ color: 0xf5c985, transparent: true, opacity: 0.72, depthWrite: false, side: THREE.DoubleSide });
+        const ritualGoldDarkMaterial = new THREE.MeshBasicMaterial({ color: 0x4a2918, transparent: true, opacity: 0.58, depthWrite: false, side: THREE.DoubleSide });
+        const ritualRedMaterial = new THREE.MeshBasicMaterial({ color: 0xff1a10, transparent: true, opacity: 0.1, depthWrite: false, side: THREE.DoubleSide });
+        const ritualSocketFillMaterial = new THREE.MeshBasicMaterial({ color: 0x050201, transparent: true, opacity: 0.34, depthWrite: false, side: THREE.DoubleSide });
+        const firePotTexture = new THREE.TextureLoader().load('assets/environment/fire pot.png');
+        firePotTexture.minFilter = THREE.LinearFilter;
+        firePotTexture.magFilter = THREE.LinearFilter;
+        const firePotMaterial = new THREE.MeshBasicMaterial({ map: firePotTexture, transparent: true, alphaTest: 0.08, depthWrite: false, side: THREE.DoubleSide });
+        const firePotShadowMaterial = new THREE.MeshBasicMaterial({ color: 0x030000, transparent: true, opacity: 0.42, depthWrite: false, side: THREE.DoubleSide });
+        const firstWaveFireTexture = new THREE.TextureLoader().load('assets/ritual%20regarding%20asset/Fire_FIRST%20WAVE.png?v=20260903b');
+        firstWaveFireTexture.minFilter = THREE.LinearFilter;
+        firstWaveFireTexture.magFilter = THREE.LinearFilter;
+        firstWaveFireTexture.repeat.set(1 / 8, 1);
+        const firstWaveFireMaterial = new THREE.MeshBasicMaterial({ map: firstWaveFireTexture, transparent: true, alphaTest: 0.01, opacity: 1, depthWrite: false, depthTest: false, side: THREE.DoubleSide });
+
+        const makeFlatMesh = (geometry, material, name, x = 0, z = 0, y = 0.036) => {
+            const mesh = new THREE.Mesh(geometry, material.clone());
+            mesh.name = name;
+            mesh.rotation.x = -Math.PI / 2;
+            mesh.position.set(x, y, z);
+            mesh.renderOrder = 2;
+            ritualShapeGroup.add(mesh);
+            return mesh;
+        };
+
+        const redAura = makeFlatMesh(new THREE.RingGeometry(1.95, 2.72, 96), ritualRedMaterial, 'RITUAL_red_energy_underlay', 0, 0, 0.031);
+        ritualShapeParts.redEnergy.push(redAura);
+
+        const outerRing = makeFlatMesh(new THREE.RingGeometry(2.4, 2.45, 128), ritualGoldMaterial, 'RITUAL_outer_gold_ring');
+        const innerRing = makeFlatMesh(new THREE.RingGeometry(2.12, 2.16, 128), ritualGoldMaterial, 'RITUAL_inner_gold_ring');
+        const shadowRing = makeFlatMesh(new THREE.RingGeometry(2.25, 2.27, 128), ritualGoldDarkMaterial, 'RITUAL_dark_inlay_ring', 0, 0, 0.034);
+        ritualShapeParts.rings.push(outerRing, innerRing, shadowRing);
+
+        const socketRadius = 2.34;
+        const socketAngles = [-Math.PI / 2, -Math.PI / 6, Math.PI / 6, Math.PI / 2, Math.PI * 5 / 6, -Math.PI * 5 / 6];
+        const socketNames = ['CANDLE_A', 'STONE_A', 'CANDLE_B', 'STONE_B', 'CANDLE_C', 'STONE_C'];
+        const socketPositions = socketAngles.map((angle) => ({ x: Math.cos(angle) * socketRadius, z: Math.sin(angle) * socketRadius }));
+
+        socketPositions.forEach((pos, index) => {
+            const fill = makeFlatMesh(new THREE.CircleGeometry(0.29, 48), ritualSocketFillMaterial, 'RITUAL_socket_fill_' + socketNames[index], pos.x, pos.z, 0.041);
+            const rim = makeFlatMesh(new THREE.RingGeometry(0.33, 0.39, 64), ritualGoldMaterial, 'RITUAL_socket_gold_rim_' + socketNames[index], pos.x, pos.z, 0.044);
+            const innerRim = makeFlatMesh(new THREE.RingGeometry(0.2, 0.23, 64), ritualGoldDarkMaterial, 'RITUAL_socket_inner_inlay_' + socketNames[index], pos.x, pos.z, 0.046);
+            const socketData = { name: socketNames[index], fill, rim, innerRim };
+            if (socketNames[index].startsWith('CANDLE')) {
+                const shadow = makeFlatMesh(new THREE.CircleGeometry(0.36, 36), firePotShadowMaterial, 'RITUAL_fire_pot_shadow_' + socketNames[index], pos.x, pos.z, 0.052);
+                shadow.scale.set(1.25, 0.78, 1);
+                const firePot = new THREE.Mesh(new THREE.PlaneGeometry(0.64, 0.69), firePotMaterial.clone());
+                firePot.name = 'RITUAL_fire_pot_' + socketNames[index];
+                firePot.position.set(pos.x, 0.42, pos.z);
+                firePot.renderOrder = 5;
+                ritualShapeGroup.add(firePot);
+                ritualShapeParts.firePots.push({ name: socketNames[index], mesh: firePot, shadow });
+                if (socketNames[index] === 'CANDLE_A') {
+                    const flameTexture = new THREE.TextureLoader().load('assets/ritual%20regarding%20asset/Fire_FIRST%20WAVE.png?v=20260903b');
+                    flameTexture.minFilter = THREE.LinearFilter;
+                    flameTexture.magFilter = THREE.LinearFilter;
+                    flameTexture.repeat.set(1 / 8, 1);
+                    const flameMaterial = firstWaveFireMaterial.clone();
+                    flameMaterial.map = flameTexture;
+                    const flame = new THREE.Mesh(new THREE.PlaneGeometry(0.92, 0.92), flameMaterial);
+                    flame.scale.setScalar(0.35);
+                    flame.userData.lightProgress = 0;
+                    flame.name = 'RITUAL_first_wave_flame_' + socketNames[index];
+                    flame.position.set(pos.x + 0.12, 1.0, pos.z - 0.13);
+                    flame.renderOrder = 7;
+                    flame.visible = false;
+                    ritualShapeGroup.add(flame);
+                    ritualShapeParts.ritualFires.push({ name: socketNames[index], mesh: flame, frame: 0, frameTimer: 0, frameCount: 8, frameTime: 0.055, targetScale: 1 });
+                    socketData.flame = flame;
+                }
+                socketData.firePot = firePot;
+                socketData.firePotShadow = shadow;
+            }
+            ritualShapeParts.sockets.push(socketData);
+        });
+
         const getLayoutMaterial = (objectData, isLine = false, sceneStyle = 'default') => {
             const name = objectData.name.toLowerCase();
             const materialName = objectData.material;
 
+            if (name.includes('room2_base')) return layoutMaterials.Room2Base;
             if (name.includes('base_ground') || name.includes('base_underground') || name.includes('basement_ritual_ground') || name.includes('basefbxasc032offbxasc032house')) return layoutMaterials.BaseGround;
             if (sceneStyle === 'shop' && (name === 'base' || name === 'base2' || name.includes('shop_beach'))) return layoutMaterials.ShopSand;
             if (sceneStyle === 'circus' && (name === 'base' || name === 'plane' || name.includes('circus'))) return layoutMaterials.CircusGround;
@@ -555,7 +746,7 @@
 
             objects.forEach((objectData) => {
                 const objectName = objectData.name.toLowerCase();
-                if (objectName.includes('body') || objectName.includes('protect') || objectName.includes('disable') || objectName.includes('dissable')) return;
+                if (objectName.includes('body') || objectName.includes('protect') || objectName.includes('disable') || objectName.includes('dissable') || objectName.includes('candle') || objectName.includes('stone')) return;
 
                 if (objectData.faces.length > 0) {
                     const positions = [];
@@ -688,7 +879,7 @@
                 const nodeName = node.name || '';
                 const objectName = nodeName.toLowerCase();
 
-                if (objectName.includes('body') || objectName.includes('protect') || objectName.includes('disable') || objectName.includes('dissable')) return;
+                if (objectName.includes('body') || objectName.includes('protect') || objectName.includes('disable') || objectName.includes('dissable') || objectName.includes('candle') || objectName.includes('stone')) return;
 
                 if (objectName.includes('ring') && node.mesh === undefined) {
                     createGeneratedRitualRing();
@@ -744,7 +935,7 @@
             })
             .catch(() => addFallbackBaseLayout());
 
-        fetch('assets/environment/home lobby scene.obj')
+        fetch('assets/environment/home%20lobby%20scene.obj?v=20260903b')
             .then((response) => {
                 if (!response.ok) throw new Error('Could not load home lobby scene.obj');
                 return response.text();
@@ -828,6 +1019,7 @@
             circusGroup.visible = areaName === 'circus';
 
             sleepingBody.visible = areaName === 'basement';
+            eyeGlowBody.visible = areaName === 'basement';
             baseHealthDisplay.style.display = areaName === 'basement' ? 'block' : 'none';
             scene.background = createBackgroundTexture(areaName);
             sceneVignette.classList.toggle('ritual-active', areaName === 'basement');
@@ -848,6 +1040,8 @@
         const mapClose = document.getElementById('map-close');
         const fadeOverlay = document.getElementById('fade-overlay');
         const sceneVignette = document.getElementById('scene-vignette');
+        const waveGesture = document.getElementById('wave-gesture');
+        const waveGestureLabel = document.getElementById('wave-gesture-label');
         let isMapOpen = false;
         let mapTriggerArmed = true;
         const openMapOnStart = false;
@@ -857,6 +1051,13 @@
             fadeOverlay.classList.toggle('active', enabled);
         };
 
+        const playWaveGesture = (label) => {
+            waveGestureLabel.textContent = label;
+            waveGesture.classList.remove('active');
+            void waveGesture.offsetWidth;
+            waveGesture.classList.add('active');
+            setTimeout(() => waveGesture.classList.remove('active'), 2200);
+        };
         const transitionToArea = (areaName) => {
             if (isTransitioning || activeArea === areaName) return;
             isTransitioning = true;
@@ -992,9 +1193,19 @@
         // --- 4.3 Enemy System ---
         let enemies = [];
         let enemySpawnTimer = 0;
-        const enemySpawnInterval = 1.4;
+        let nextEnemySpawnDelay = 0;
+        let wavePauseTimer = 0;
+        let firstWaveGesturePlayed = false;
+        let nightSurvived = false;
+        let nightSurviveMessageTimer = 0;
+        let nightClearSettled = false;
         const maxEnemies = 10;
-        let totalEnemiesSpawned = 0;
+        let currentWaveIndex = 0;
+        let currentWaveSpawnIndex = 0;
+        const enemyWaves = [
+            { name: 'Wave 1', spawnIntervalMin: 1.35, spawnIntervalMax: 2.05, spawnBatchMin: 1, spawnBatchMax: 3, nextDelay: 2.6, ghosts: ['drifter', 'drifter', 'drifter', 'drifter', 'drifter', 'drifter', 'drifter', 'drifter', 'drifter', 'drifter'] },
+            { name: 'Wave 2', spawnIntervalMin: 0.8, spawnIntervalMax: 1.18, spawnBatchMin: 1, spawnBatchMax: 3, nextDelay: 0, ghosts: ['drifter', 'skitter', 'drifter', 'skitter', 'drifter', 'skitter', 'drifter', 'skitter', 'skitter', 'drifter', 'skitter', 'drifter'] }
+        ];
         const loadGhostTexture = (path) => {
             const texture = new THREE.TextureLoader().load(path);
             texture.minFilter = THREE.LinearFilter;
@@ -1100,8 +1311,23 @@
                 travelRotationOffset: 0
             }
         };
-        const activeGhostTypeId = 'warden';
-        const activeGhostType = ghostTypes[activeGhostTypeId];
+        const getCurrentWave = () => enemyWaves[Math.min(currentWaveIndex, enemyWaves.length - 1)];
+        const getWaveSpawnDelay = (wave) => THREE.MathUtils.randFloat(wave.spawnIntervalMin, wave.spawnIntervalMax);
+        const isNightWaveComplete = () => currentWaveIndex >= enemyWaves.length;
+        const lightFirstNightCandle = () => {
+            if (ritualState.candleAFlameLit) return;
+            ritualState.candleAFlameLit = true;
+            ritualShapeParts.ritualFires.forEach((flame) => {
+                if (flame.name === 'CANDLE_A') {
+                    flame.mesh.visible = true;
+                    flame.mesh.material.opacity = 0;
+                    flame.mesh.material.map.offset.x = 0;
+                    flame.mesh.material.map.needsUpdate = true;
+                    flame.mesh.userData.lightProgress = 0;
+                    flame.mesh.scale.setScalar(0.35);
+                }
+            });
+        };
         const slashFrameCount = 9;
         const slashSpritesheetTexture = new THREE.TextureLoader().load('assets/character/slash.png');
         slashSpritesheetTexture.repeat.set(1 / slashFrameCount, 1);
@@ -1274,10 +1500,10 @@
             enemy.mesh.scale.set(facingScale * visualScale, visualScale, 1);
         };
 
-        const spawnEnemy = () => {
+        const spawnEnemy = (ghostTypeId = 'drifter') => {
             const enemyGroup = new THREE.Group();
             
-            const ghostType = activeGhostType;
+            const ghostType = ghostTypes[ghostTypeId] || ghostTypes.drifter;
             const enemyMat = new THREE.MeshBasicMaterial({
                 map: ghostType.texture,
                 transparent: true,
@@ -1353,6 +1579,7 @@
         // --- 5.5 Dash & Slash Logic ---
         const dashBtn = document.getElementById('dash-button');
         const slashBtn = document.getElementById('slash-button');
+        const cinematicBtn = document.getElementById('cinematic-button');
         
         let isDashing = false;
         let dashTimer = 0;
@@ -1423,7 +1650,7 @@
         const resolvePlayerEnemyCollision = () => {
             if (isDashing) return;
 
-            const defaultBlockRadius = activeGhostType.contactRadius;
+            const defaultBlockRadius = 0.58;
             enemies.forEach((enemy) => {
                 const dx = characterGroup.position.x - enemy.group.position.x;
                 const dz = characterGroup.position.z - enemy.group.position.z;
@@ -1440,7 +1667,7 @@
         };
 
         const resolveEnemyEnemyCollision = () => {
-            const defaultEnemyBlockRadius = activeGhostType.separationRadius;
+            const defaultEnemyBlockRadius = 0.72;
             for (let i = 0; i < enemies.length; i++) {
                 for (let j = i + 1; j < enemies.length; j++) {
                     const a = enemies[i].group;
@@ -1497,13 +1724,26 @@
         dashBtn.addEventListener('mousedown', triggerDash);
         slashBtn.addEventListener('touchstart', triggerSlash, { passive: false });
         slashBtn.addEventListener('mousedown', triggerSlash);
+        const toggleCinematicCamera = (event) => {
+            if (event) event.preventDefault();
+            isCinematicCamera = !isCinematicCamera;
+            cinematicBtn.classList.toggle('active', isCinematicCamera);
+        };
+        cinematicBtn.addEventListener('touchstart', toggleCinematicCamera, { passive: false });
+        cinematicBtn.addEventListener('mousedown', toggleCinematicCamera);
 
         // --- 6. Game Loop ---
         const clock = new THREE.Clock();
         const moveSpeed = 5; // units per second
-        const cameraHeight = 18.7;
-        const cameraBackDistance = 13.2;
-        const cameraLookAhead = 2.0;
+        const normalCamera = { height: 18.7, backDistance: 13.2, lookAhead: 2.0 };
+        const cinematicCamera = { height: 15.9, backDistance: 11.2, lookAhead: 1.4 };
+        const currentCamera = { ...normalCamera };
+        let isCinematicCamera = false;
+        let isIntroCinematic = true;
+        let introTimer = 0;
+        const introDuration = 3.35;
+        character.visible = false;
+        dropShadow.visible = false;
         let screenShakeTimer = 0;
         let screenShakeDuration = 0;
         let screenShakeStrength = 0;
@@ -1521,7 +1761,7 @@
             slashRecoveryTimer = Math.max(0, slashRecoveryTimer - dt);
             
             // --- Player Movement ---
-            let currentSpeed = (isMapOpen || isTransitioning) ? 0 : (slashRecoveryTimer > 0 ? moveSpeed * 0.62 : moveSpeed);
+            let currentSpeed = (isMapOpen || isTransitioning || isCinematicCamera || isIntroCinematic) ? 0 : (slashRecoveryTimer > 0 ? moveSpeed * 0.62 : moveSpeed);
             if (isDashing) {
                 dashTimer -= dt;
                 if (dashTimer <= 0) isDashing = false;
@@ -1584,15 +1824,87 @@
             character.quaternion.copy(camera.quaternion);
             character.rotateZ(soulTilt + slashTilt);
             updateSlashVfx(dt);
+            if (activeArea === 'basement') {
+                const ritualPulse = 0.9 + Math.sin(performance.now() * 0.0022) * 0.1;
+                ritualShapeParts.redEnergy.forEach((mesh) => {
+                    mesh.material.opacity = 0.08 + ritualPulse * 0.04;
+                    mesh.rotation.z += dt * 0.08;
+                });
+                ritualShapeParts.rings.forEach((mesh, index) => {
+                    mesh.material.opacity = index === 2 ? 0.48 : 0.62 + ritualPulse * 0.06;
+                });
+                ritualShapeParts.sockets.forEach((socket, index) => {
+                    const socketPulse = 1 + Math.sin(performance.now() * 0.003 + index) * 0.025;
+                    if (socket.rim) socket.rim.scale.setScalar(socketPulse);
+                });
+                ritualShapeParts.firePots.forEach((pot, index) => {
+                    pot.mesh.quaternion.copy(camera.quaternion);
+                    pot.mesh.position.y = 0.42 + Math.sin(performance.now() * 0.003 + index) * 0.018;
+                    pot.shadow.material.opacity = 0.34 + Math.sin(performance.now() * 0.003 + index) * 0.05;
+                });
+                ritualShapeParts.ritualFires.forEach((flame, index) => {
+                    flame.mesh.quaternion.copy(camera.quaternion);
+                    flame.mesh.position.x = socketPositions[0].x + 0.12;
+                    flame.mesh.position.y = 1.0;
+                    flame.mesh.position.z = socketPositions[0].z - 0.13;
+                    flame.mesh.visible = ritualState.candleAFlameLit;
+                    if (!ritualState.candleAFlameLit) return;
+                    flame.mesh.userData.lightProgress = Math.min(1, (flame.mesh.userData.lightProgress || 0) + dt * 1.9);
+                    const lightEase = flame.mesh.userData.lightProgress * flame.mesh.userData.lightProgress * (3 - 2 * flame.mesh.userData.lightProgress);
+                    flame.mesh.material.opacity = lightEase;
+                    flame.mesh.scale.setScalar(THREE.MathUtils.lerp(0.35, flame.targetScale, lightEase));
+                    flame.frameTimer += dt;
+                    if (flame.frameTimer >= flame.frameTime) {
+                        flame.frameTimer = 0;
+                        flame.frame = (flame.frame + 1) % flame.frameCount;
+                        flame.mesh.material.map.offset.x = flame.frame / flame.frameCount;
+                    }
+                });
+            }
             // --- Enemy AI & Spawning ---
-            if (activeArea === 'basement' && baseHealth > 0 && soulHealth > 0) {
-                enemySpawnTimer += dt;
-                if (enemySpawnTimer >= enemySpawnInterval && totalEnemiesSpawned < maxEnemies) {
-                    spawnEnemy();
-                    totalEnemiesSpawned++;
-                    enemySpawnTimer = 0;
+            if (!isIntroCinematic && activeArea === 'basement' && baseHealth > 0 && soulHealth > 0) {
+                if (!isNightWaveComplete()) {
+                    const currentWave = getCurrentWave();
+                    if (wavePauseTimer > 0) {
+                        wavePauseTimer = Math.max(0, wavePauseTimer - dt);
+                    } else if (currentWaveSpawnIndex >= currentWave.ghosts.length && enemies.length === 0) {
+                        currentWaveIndex++;
+                        currentWaveSpawnIndex = 0;
+                        nextEnemySpawnDelay = 0;
+                        wavePauseTimer = currentWaveIndex < enemyWaves.length ? (currentWave.nextDelay || 1.8) : 0;
+                        if (currentWaveIndex < enemyWaves.length) {
+                            playWaveGesture(enemyWaves[currentWaveIndex].name);
+                        } else if (!nightSurvived) {
+                            nightSurvived = true;
+                            lightFirstNightCandle();
+                            nightSurviveMessageTimer = 1.25;
+                        }
+                    } else if (currentWaveSpawnIndex < currentWave.ghosts.length && enemies.length < maxEnemies) {
+                        if (nextEnemySpawnDelay <= 0) nextEnemySpawnDelay = getWaveSpawnDelay(currentWave);
+                        enemySpawnTimer += dt;
+                        if (enemySpawnTimer >= nextEnemySpawnDelay) {
+                            const remaining = currentWave.ghosts.length - currentWaveSpawnIndex;
+                            const capacity = maxEnemies - enemies.length;
+                            const desiredBatch = THREE.MathUtils.randInt(currentWave.spawnBatchMin || 1, currentWave.spawnBatchMax || 1);
+                            const batchCount = Math.min(remaining, capacity, desiredBatch);
+                            for (let batchIndex = 0; batchIndex < batchCount; batchIndex++) {
+                                spawnEnemy(currentWave.ghosts[currentWaveSpawnIndex]);
+                                currentWaveSpawnIndex++;
+                            }
+                            enemySpawnTimer = 0;
+                            nextEnemySpawnDelay = getWaveSpawnDelay(currentWave);
+                        }
+                    }
+                } else if (nightSurvived && !nightClearSettled) {
+                    nightSurviveMessageTimer = Math.max(0, nightSurviveMessageTimer - dt);
+                    eyeGlowBody.material.opacity = Math.max(0, eyeGlowBody.material.opacity - dt * 0.85);
+                    if (nightSurviveMessageTimer <= 0) {
+                        nightClearSettled = true;
+                        eyeGlowBody.material.opacity = 0;
+                        lightFirstNightCandle();
+                        playWaveGesture('You Survived The Night');
+                    }
                 }
-
 
                 resolveEnemyEnemyCollision();
 
@@ -1770,15 +2082,78 @@
                 }
             }
 
-            // Frame the player lower on screen and keep more of the ritual area visible ahead.
-            camera.position.x = characterGroup.position.x + shakeX;
-            camera.position.z = characterGroup.position.z + cameraBackDistance + shakeZ;
-            camera.position.y = cameraHeight;
-            camera.lookAt(
-                characterGroup.position.x + shakeX * 0.35,
-                0,
-                characterGroup.position.z - cameraLookAhead + shakeZ * 0.35
-            );
+            if (isIntroCinematic) {
+                introTimer += dt;
+                const introProgress = Math.min(1, introTimer / introDuration);
+                setFade(introTimer < 0.82);
+                const fadeRevealProgress = Math.min(1, Math.max(0, (introTimer - 0.82) / 0.72));
+                eyeGlowBody.material.opacity = fadeRevealProgress < 0.72 ? 0 : Math.min(1, (fadeRevealProgress - 0.72) / 0.28);
+
+                const revealSoul = introProgress > 0.48;
+                character.visible = revealSoul;
+                dropShadow.visible = revealSoul;
+                if (revealSoul) {
+                    const soulReveal = Math.min(1, (introProgress - 0.48) / 0.22);
+                    charMaterial.opacity = soulReveal;
+                    dropShadow.material.opacity = 0.4 * soulReveal;
+                }
+
+                if (introProgress < 0.64) {
+                    const zoomProgress = introProgress / 0.64;
+                    camera.position.x = 0;
+                    camera.position.y = THREE.MathUtils.lerp(9.4, 13.8, zoomProgress);
+                    camera.position.z = THREE.MathUtils.lerp(5.9, 9.2, zoomProgress);
+                    camera.lookAt(0, 0, 1.011);
+                } else {
+                    const attachProgress = (introProgress - 0.64) / 0.36;
+                    const easeAttach = attachProgress * attachProgress * (3 - 2 * attachProgress);
+                    currentCamera.height = THREE.MathUtils.lerp(13.8, normalCamera.height, easeAttach);
+                    currentCamera.backDistance = THREE.MathUtils.lerp(9.2, normalCamera.backDistance, easeAttach);
+                    currentCamera.lookAhead = THREE.MathUtils.lerp(0.3, normalCamera.lookAhead, easeAttach);
+                    camera.position.x = THREE.MathUtils.lerp(0, characterGroup.position.x, easeAttach) + shakeX;
+                    camera.position.z = characterGroup.position.z + currentCamera.backDistance + shakeZ;
+                    camera.position.y = currentCamera.height;
+                    camera.lookAt(
+                        THREE.MathUtils.lerp(0, characterGroup.position.x, easeAttach) + shakeX * 0.35,
+                        0,
+                        characterGroup.position.z - currentCamera.lookAhead + shakeZ * 0.35
+                    );
+                }
+
+                if (introTimer >= introDuration) {
+                    isIntroCinematic = false;
+                    setFade(false);
+                    eyeGlowBody.material.opacity = activeArea === 'basement' ? 1 : 0;
+                    character.visible = true;
+                    dropShadow.visible = true;
+                    charMaterial.opacity = 1;
+                    dropShadow.material.opacity = 0.4;
+                    currentCamera.height = normalCamera.height;
+                    currentCamera.backDistance = normalCamera.backDistance;
+                    currentCamera.lookAhead = normalCamera.lookAhead;
+                    if (!firstWaveGesturePlayed) {
+                        firstWaveGesturePlayed = true;
+                        playWaveGesture(enemyWaves[0].name);
+                        wavePauseTimer = 1.8;
+                    }
+                }
+            } else {
+                const cameraTarget = isCinematicCamera ? cinematicCamera : normalCamera;
+                const cameraEase = 1 - Math.pow(0.001, dt);
+                currentCamera.height = THREE.MathUtils.lerp(currentCamera.height, cameraTarget.height, cameraEase);
+                currentCamera.backDistance = THREE.MathUtils.lerp(currentCamera.backDistance, cameraTarget.backDistance, cameraEase);
+                currentCamera.lookAhead = THREE.MathUtils.lerp(currentCamera.lookAhead, cameraTarget.lookAhead, cameraEase);
+
+                // Frame the player lower on screen and keep more of the ritual area visible ahead.
+                camera.position.x = characterGroup.position.x + shakeX;
+                camera.position.z = characterGroup.position.z + currentCamera.backDistance + shakeZ;
+                camera.position.y = currentCamera.height;
+                camera.lookAt(
+                    characterGroup.position.x + shakeX * 0.35,
+                    0,
+                    characterGroup.position.z - currentCamera.lookAhead + shakeZ * 0.35
+                );
+            }
             renderer.render(scene, camera);
         }
 
@@ -1795,6 +2170,48 @@
     </script>
 </body>
 </html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
