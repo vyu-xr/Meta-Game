@@ -64,3 +64,47 @@
 - Increased Skitter speed to 2.8, zig-zag spacing to 2.2, and added close-range slash forgiveness for point-blank enemies.
 - Added short combat camera shake for successful slash hits and ritual circle impacts.
 - Increased combat camera shake strength slightly so hit feedback is easier to notice during testing.
+- Switched active testing enemy to Stalker, added soul health, and gave Stalker player-targeting attacks that can fail the night.
+- Reduced Stalker soul damage from 12 to 5 for gentler player-targeting pressure during testing.
+- Switched active testing enemy to Warden, added ritual pressure plus a close-range player area attack with a visible warning circle and cooldown.
+- Tuned Warden to feel heavier with a larger player area attack, lower knockback, and uninterruptible area windup while still taking slash damage.
+- Made Warden retaliate with its player area attack when slashed, including while pressuring the ritual circle.
+- Renamed basement and lobby OBJ helper objects with clearer BASEMENT/LOBBY labels and updated the basement loader to the new environment filename.
+- Added a full-screen 2D map overlay using the local map image and opened it from the lobby map collider.
+- Updated home lobby collider bounds from the latest export: house exit opens the map, bottom collider returns to basement, and lobby spawn matches its marker.
+- Temporarily set the map overlay to open on start for map button placement testing.
+- Adjusted temporary map buttons to show the intended travel chain: Home to Shop, Shop to Circus, and Circus to Home.
+- Enlarged the temporary Circus map button and nudged it left for placement testing.
+- Standardized temporary map buttons to 50px and removed the enlarged Circus button override.
+- Nudged the temporary Circus map button inward from the right edge for better spacing.
+- Moved the temporary Circus map button to 80% left for placement testing.
+- Moved the temporary Circus map button to 87% left for placement testing.
+- Moved the temporary Home map button to 58% left and 50% top for placement testing.
+- Nudged the temporary Home map button from 58% left to 55% left.
+- Switched the temporary map background from lock-all to lock-two while keeping placement-tested buttons.
+- Replaced visible map button circles with invisible hit areas and local map indicator stroke/fill images for placement testing.
+- Scaled map indicator stroke/fill visuals down by 50% while keeping touch hit areas larger.
+- Aligned map fill indicators with the invisible button destinations so selected places fill at the tapped location.
+- Moved Circus map indicator and invisible hit area to 84% left and 49% top.
+- Moved Circus map indicator and hit area to 83% left and 47% top.
+- Converted map indicator images to CSS alpha masks so stroke and fill colors can be tuned in code.
+- Tuned map indicator colors to a transparent dark stroke and bright warm parchment fill.
+- Retuned map indicator colors to dark ink stroke and pale moon-cyan fill for stronger contrast on the illustrated map.
+- Moved Shop map indicator and hit area to 55% left and 73% top.
+- Moved Home map indicator and hit area to 55% left and 52% top.
+- Moved Circus map indicator and hit area to 82% left and 45% top.
+- Nudged Circus map indicator and hit area from 45% top to 46% top.
+- Fine-tuned Circus map indicator and hit area to 46.3% top.
+- Swapped map indicator back layer to use the fill mask shape as a larger dark shadow behind the active fill.
+- Enlarged map indicators by 20% and darkened the back fill layer for stronger contrast.
+- Kept active map fill indicators at 25px while leaving the darker back layer at 30px.
+- Added black fade transitions for basement/lobby movement and animated map enter/select flow with scale and indicator pop effects.
+- Added the shop beach scene OBJ as a map destination, with shop spawn, map-return trigger, and fade-based travel from the map overlay.
+- Added the circus scene OBJ as a map destination, with circus spawn, map-return trigger, and separate scene material styling.
+- Refreshed the Circus scene asset and increased the map travel zoom animation for stronger destination transitions.
+- Added Soul Coin wallet logic: defeated ghosts now award currency, with Drifter set to 2 coins and stronger ghosts worth more.
+- Tuned Soul Coin rewards so Drifter/Skitter/Stalker/Warden now award 2/3/4/5 coins.
+- Updated the basement layout config from the underground scene markers and added a subtle ritual-only vignette overlay.
+- Increased the ritual scene vignette, moved the basement spawn closer to the ritual circle, and added soft white ritual dust particles.
+- Reduced the radial background gradient radius by 20 percent to make the ritual scene center glow tighter.
+- Darkened the outer ritual background gradient to focus attention on the center ritual area.

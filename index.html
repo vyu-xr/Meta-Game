@@ -94,14 +94,185 @@
             text-shadow: 1px 1px 2px black;
             pointer-events: none;
         }
+        #map-overlay {
+            position: absolute;
+            inset: 0;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            background: rgba(3, 2, 4, 0.78);
+            z-index: 30;
+            touch-action: none;
+        }
+        #map-overlay.open {
+            display: flex;
+        }
+        #map-frame {
+            position: relative;
+            width: min(100vw, 56.25vh);
+            height: min(177.78vw, 100vh);
+            max-width: 1080px;
+            max-height: 1920px;
+            overflow: hidden;
+            background: #080305;
+        }
+        #map-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+        .map-node {
+            position: absolute;
+            width: 74px;
+            height: 74px;
+            transform: translate(-50%, -50%);
+            padding: 0;
+            border: 0;
+            background: transparent;
+            color: transparent;
+            z-index: 4;
+            touch-action: manipulation;
+        }
+        .map-indicator,
+        .map-indicator-fill {
+            position: absolute;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+            background: var(--map-indicator-color, rgba(1, 1, 2, 0.92));
+            mask-repeat: no-repeat;
+            mask-position: center;
+            mask-size: contain;
+            -webkit-mask-repeat: no-repeat;
+            -webkit-mask-position: center;
+            -webkit-mask-size: contain;
+        }
+        .map-indicator {
+            width: 30px;
+            height: 30px;
+            z-index: 2;
+            opacity: 0.82;
+            transform: translate(-50%, -50%) scale(1.28);
+            mask-image: url('assets/environment/map indicator fill.png');
+            -webkit-mask-image: url('assets/environment/map indicator fill.png');
+        }
+        .map-indicator-fill {
+            width: 25px;
+            height: 25px;
+            z-index: 3;
+            display: none;
+            --map-indicator-color: #c9fbff;
+            filter: drop-shadow(0 0 6px rgba(201, 251, 255, 0.78)) drop-shadow(0 1px 2px rgba(0, 0, 0, 0.65));
+            mask-image: url('assets/environment/map indicator fill.png');
+            -webkit-mask-image: url('assets/environment/map indicator fill.png');
+        }
+        .map-indicator-fill.active {
+            display: block;
+        }
+        #map-close {
+            position: absolute;
+            top: 18px;
+            right: 18px;
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            border: 2px solid rgba(255,255,255,0.75);
+            background: rgba(0,0,0,0.45);
+            color: white;
+            font-size: 24px;
+            z-index: 3;
+            touch-action: manipulation;
+        }
+        #scene-vignette {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            z-index: 18;
+            opacity: 0;
+            background: radial-gradient(circle at 50% 47%, rgba(0, 0, 0, 0) 36%, rgba(44, 0, 10, 0.28) 68%, rgba(0, 0, 0, 0.58) 100%);
+            transition: opacity 0.4s ease;
+        }
+        #scene-vignette.ritual-active {
+            opacity: 1;
+        }
+        #fade-overlay {
+            position: absolute;
+            inset: 0;
+            background: #000;
+            opacity: 0;
+            pointer-events: none;
+            z-index: 70;
+            transition: opacity 0.38s ease;
+        }
+        #fade-overlay.active {
+            opacity: 1;
+        }
+        #map-overlay {
+            background: #000;
+        }
+        #map-overlay.open #map-frame {
+            animation: mapEnter 0.48s cubic-bezier(.16, .86, .28, 1) both;
+        }
+        #map-frame.departing {
+            animation: mapDepart 0.36s ease both;
+        }
+        #map-overlay.open .map-indicator {
+            animation: indicatorBackPop 0.34s cubic-bezier(.2, 1.35, .28, 1) 0.26s both;
+        }
+        #map-overlay.open .map-indicator-fill.active {
+            animation: indicatorPop 0.34s cubic-bezier(.2, 1.35, .28, 1) 0.26s both;
+        }
+        .map-indicator-fill.travel-selected {
+            display: block;
+            animation: indicatorSelect 0.42s ease both;
+        }
+        @keyframes mapEnter {
+            from { opacity: 0; transform: scale(1.16); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        @keyframes mapDepart {
+            from { opacity: 1; transform: scale(1); }
+            to { opacity: 0; transform: scale(1.18); }
+        }
+        @keyframes indicatorBackPop {
+            from { opacity: 0; transform: translate(-50%, -50%) scale(1.9); }
+            to { opacity: 0.82; transform: translate(-50%, -50%) scale(1.28); }
+        }
+        @keyframes indicatorPop {
+            from { opacity: 0; transform: translate(-50%, -50%) scale(1.8); }
+            to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+        }
+        @keyframes indicatorSelect {
+            from { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+            to { opacity: 1; transform: translate(-50%, -50%) scale(1.65); }
+        }
     </style>
 </head>
 <body>
     <div id="hud">
         Move with Joystick, DASH & SLASH!<br>
-        <span id="base-health-display" style="color: #ffcccc; font-weight: bold;">Base Health: 100</span>
+        <span id="base-health-display" style="color: #ffcccc; font-weight: bold;">Base Health: 100</span><br>
+        <span id="soul-health-display" style="color: #cde9ff; font-weight: bold;">Soul Health: 100</span><br>
+        <span id="soul-coin-display" style="color: #ffe3a3; font-weight: bold;">Soul Coins: 0</span>
     </div>
     <canvas id="game-canvas"></canvas>
+    <div id="map-overlay" aria-hidden="true">
+        <div id="map-frame">
+            <img id="map-image" src="assets/environment/lock two places.jpg" alt="Travel map">
+            <button id="map-close" type="button">x</button>
+            <span class="map-indicator" style="left: 55%; top: 73%;"></span>
+            <span class="map-indicator-fill" data-location="shop" style="left: 55%; top: 73%;"></span>
+            <button class="map-node" data-destination="shop" type="button" aria-label="Travel to shop" style="left: 55%; top: 73%;">SHOP</button>
+            <span class="map-indicator" style="left: 82%; top: 46.3%;"></span>
+            <span class="map-indicator-fill" data-location="circus" style="left: 82%; top: 46.3%;"></span>
+            <button class="map-node" data-destination="circus" type="button" aria-label="Travel to circus" style="left: 82%; top: 46.3%;">CIRCUS</button>
+            <span class="map-indicator" style="left: 55%; top: 52%;"></span>
+            <span class="map-indicator-fill active" data-location="home" style="left: 55%; top: 52%;"></span>
+            <button class="map-node" data-destination="home" type="button" aria-label="Travel home" style="left: 55%; top: 52%;">HOME</button>
+        </div>
+    </div>
+    <div id="scene-vignette" class="ritual-active"></div>
+    <div id="fade-overlay"></div>
     <!-- Zone for nipple.js to bind to -->
     <div id="joystick-zone"></div>
     <div id="dash-button">DASH</div>
@@ -122,7 +293,7 @@
             bgCanvas.width = Math.max(512, window.innerWidth);
             bgCanvas.height = Math.max(512, window.innerHeight);
             const bgCtx = bgCanvas.getContext('2d');
-            const radius = Math.max(bgCanvas.width, bgCanvas.height) * 0.75;
+            const radius = Math.max(bgCanvas.width, bgCanvas.height) * 0.6;
             const gradient = bgCtx.createRadialGradient(
                 bgCanvas.width * 0.5,
                 bgCanvas.height * 0.45,
@@ -138,8 +309,8 @@
                 gradient.addColorStop(1, '#070707');
             } else {
                 gradient.addColorStop(0, '#2a0508');
-                gradient.addColorStop(0.55, '#170306');
-                gradient.addColorStop(1, '#050001');
+                gradient.addColorStop(0.55, '#100103');
+                gradient.addColorStop(1, '#010000');
             }
 
             bgCtx.fillStyle = gradient;
@@ -188,7 +359,7 @@
         let slashPoseDir = { x: 1, z: 0 };
         // Group to hold both shadow and character
         const characterGroup = new THREE.Group();
-        characterGroup.position.set(1.878, 0, -2.815);
+        characterGroup.position.set(2.65, 0, 1.01);
         
         const character = new THREE.Mesh(charGeometry, charMaterial);
         character.position.y = 1; // Elevate so it sits on floor
@@ -245,6 +416,8 @@
             BodyProtect: new THREE.MeshBasicMaterial({ color: 0xeadfd5, side: THREE.DoubleSide }),
             BaseGround: new THREE.MeshBasicMaterial({ map: baseGroundTexture, side: THREE.DoubleSide }),
             HouseBase: new THREE.MeshBasicMaterial({ color: 0x4a302d, side: THREE.DoubleSide }),
+            ShopSand: new THREE.MeshBasicMaterial({ color: 0xb88f64, side: THREE.DoubleSide }),
+            CircusGround: new THREE.MeshBasicMaterial({ color: 0x6f4a68, side: THREE.DoubleSide }),
             Default: new THREE.MeshBasicMaterial({ color: 0xb8c7bd, side: THREE.DoubleSide })
         };
         const objLayoutScale = 1;
@@ -253,16 +426,28 @@
         const lobbyGroup = new THREE.Group();
         lobbyGroup.name = 'HomeLobbyScene';
         lobbyGroup.visible = false;
+        const shopGroup = new THREE.Group();
+        shopGroup.name = 'ShopBeachScene';
+        shopGroup.visible = false;
+        const circusGroup = new THREE.Group();
+        circusGroup.name = 'CircusScene';
+        circusGroup.visible = false;
         scene.add(basementGroup);
         scene.add(lobbyGroup);
+        scene.add(shopGroup);
+        scene.add(circusGroup);
         let activeArea = 'basement';
         let lobbyReady = false;
+        let shopReady = false;
+        let circusReady = false;
 
-        const getLayoutMaterial = (objectData, isLine = false) => {
+        const getLayoutMaterial = (objectData, isLine = false, sceneStyle = 'default') => {
             const name = objectData.name.toLowerCase();
             const materialName = objectData.material;
 
-            if (name.includes('base_ground') || name.includes('base_underground') || name.includes('basefbxasc032offbxasc032house')) return layoutMaterials.BaseGround;
+            if (name.includes('base_ground') || name.includes('base_underground') || name.includes('basement_ritual_ground') || name.includes('basefbxasc032offbxasc032house')) return layoutMaterials.BaseGround;
+            if (sceneStyle === 'shop' && (name === 'base' || name === 'base2' || name.includes('shop_beach'))) return layoutMaterials.ShopSand;
+            if (sceneStyle === 'circus' && (name === 'base' || name === 'plane' || name.includes('circus'))) return layoutMaterials.CircusGround;
             if (name.includes('ground')) return layoutMaterials.Ground;
             if (name.includes('base_circle')) return layoutMaterials.BaseCircle;
             if (name.includes('candle')) return layoutMaterials.CandleMarker;
@@ -288,7 +473,7 @@
             scene.add(baseMesh);
         };
 
-        const addObjLayoutToScene = (objText, targetGroup = scene) => {
+        const addObjLayoutToScene = (objText, targetGroup = scene, sceneStyle = 'default') => {
             const vertices = [];
             const texcoords = [];
             let currentObject = null;
@@ -391,7 +576,7 @@
                     }
                     geometry.computeVertexNormals();
 
-                    const material = getLayoutMaterial(objectData);
+                    const material = getLayoutMaterial(objectData, false, sceneStyle);
                     const mesh = new THREE.Mesh(geometry, material);
                     mesh.name = objectData.name;
                     targetGroup.add(mesh);
@@ -407,7 +592,7 @@
                     const geometry = new THREE.BufferGeometry();
                     geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
 
-                    const material = getLayoutMaterial(objectData, true);
+                    const material = getLayoutMaterial(objectData, true, sceneStyle);
                     const lineSegments = new THREE.LineSegments(geometry, material);
                     lineSegments.name = objectData.name;
                     targetGroup.add(lineSegments);
@@ -548,9 +733,9 @@
             if (!generatedRing) createGeneratedRitualRing(targetGroup);
         };
 
-        fetch('assets/environment/base upgrade.obj')
+        fetch('assets/environment/base underground ritual scene.obj')
             .then((response) => {
-                if (!response.ok) throw new Error('Could not load base upgrade.obj');
+                if (!response.ok) throw new Error('Could not load base underground ritual scene.obj');
                 return response.text();
             })
             .then((objText) => {
@@ -569,10 +754,31 @@
                 lobbyReady = true;
             });
 
+        fetch('assets/environment/shop beach scene.obj')
+            .then((response) => {
+                if (!response.ok) throw new Error('Could not load shop beach scene.obj');
+                return response.text();
+            })
+            .then((objText) => {
+                addObjLayoutToScene(objText, shopGroup, 'shop');
+                shopReady = true;
+            });
+
+        fetch('assets/environment/circus sccene.obj')
+            .then((response) => {
+                if (!response.ok) throw new Error('Could not load circus sccene.obj');
+                return response.text();
+            })
+            .then((objText) => {
+                addObjLayoutToScene(objText, circusGroup, 'circus');
+                circusReady = true;
+            });
+
         // --- 4.2 Central Base State ---
         const areaConfigs = {
             basement: {
-                bounds: { minX: -8.8, maxX: 8.8, minZ: -11.4, maxZ: 11.4 },
+                bounds: { minX: -9.24, maxX: 9.24, minZ: -8.69, maxZ: 12.0 },
+                spawn: { x: 2.65, z: 1.01 },
                 ritualBlockRadius: 2.2,
                 ritualCenter: { x: 0, z: 1.011 },
                 backWall: { minX: -4.15, maxX: 4.15, z: -8.45 },
@@ -580,7 +786,20 @@
             },
             lobby: {
                 bounds: { minX: -6.639, maxX: 7.892, minZ: -7.935, maxZ: 9.928 },
-                spawn: { x: 4.174, z: -6.832 }
+                spawn: { x: 3.35, z: -5.89 },
+                mapCollider: { minX: -4.982, maxX: -1.963, minZ: 5.894, maxZ: 7.156 },
+                basementCollider: { minX: 1.821, maxX: 4.841, minZ: -8.297, maxZ: -7.034 },
+                mapReturnSpawn: { x: -3.68, z: 4.83 }
+            },
+            shop: {
+                bounds: { minX: -17.1, maxX: 17.1, minZ: -7.7, maxZ: 15.1 },
+                spawn: { x: 3.35, z: -5.89 },
+                mapCollider: { minX: 1.821, maxX: 4.841, minZ: -8.297, maxZ: -7.034 }
+            },
+            circus: {
+                bounds: { minX: -19.7, maxX: 17.1, minZ: -7.7, maxZ: 8.3 },
+                spawn: { x: -16.64, z: -0.18 },
+                mapCollider: { minX: -19.774, maxX: -18.426, minZ: -1.833, maxZ: 1.22 }
             }
         };
 
@@ -599,22 +818,131 @@
         const switchArea = (areaName) => {
             if (activeArea === areaName) return;
             if (areaName === 'lobby' && !lobbyReady) return;
+            if (areaName === 'shop' && !shopReady) return;
+            if (areaName === 'circus' && !circusReady) return;
 
             activeArea = areaName;
             basementGroup.visible = areaName === 'basement';
             lobbyGroup.visible = areaName === 'lobby';
+            shopGroup.visible = areaName === 'shop';
+            circusGroup.visible = areaName === 'circus';
 
             sleepingBody.visible = areaName === 'basement';
             baseHealthDisplay.style.display = areaName === 'basement' ? 'block' : 'none';
             scene.background = createBackgroundTexture(areaName);
+            sceneVignette.classList.toggle('ritual-active', areaName === 'basement');
 
-            if (areaName === 'lobby') {
+            if (areaName !== 'basement') {
                 clearEnemies();
-                const spawn = areaConfigs.lobby.spawn;
+            }
+
+            const spawn = areaConfigs[areaName].spawn;
+            if (spawn) {
                 characterGroup.position.set(spawn.x, 0, spawn.z);
             }
         };
 
+
+        const mapOverlay = document.getElementById('map-overlay');
+        const mapFrame = document.getElementById('map-frame');
+        const mapClose = document.getElementById('map-close');
+        const fadeOverlay = document.getElementById('fade-overlay');
+        const sceneVignette = document.getElementById('scene-vignette');
+        let isMapOpen = false;
+        let mapTriggerArmed = true;
+        const openMapOnStart = false;
+        let isTransitioning = false;
+
+        const setFade = (enabled) => {
+            fadeOverlay.classList.toggle('active', enabled);
+        };
+
+        const transitionToArea = (areaName) => {
+            if (isTransitioning || activeArea === areaName) return;
+            isTransitioning = true;
+            setFade(true);
+            setTimeout(() => {
+                switchArea(areaName);
+                setFade(false);
+                setTimeout(() => { isTransitioning = false; }, 420);
+            }, 390);
+        };
+
+        const openMap = () => {
+            if (isTransitioning) return;
+            isTransitioning = true;
+            setFade(true);
+            setTimeout(() => {
+                isMapOpen = true;
+                mapFrame.classList.remove('departing');
+                mapOverlay.classList.add('open');
+                mapOverlay.setAttribute('aria-hidden', 'false');
+                setFade(false);
+                setTimeout(() => { isTransitioning = false; }, 520);
+            }, 360);
+        };
+
+        const closeMap = () => {
+            if (isTransitioning) return;
+            isTransitioning = true;
+            mapFrame.classList.add('departing');
+            setFade(true);
+            setTimeout(() => {
+                isMapOpen = false;
+                mapTriggerArmed = false;
+                mapFrame.classList.remove('departing');
+                mapOverlay.classList.remove('open');
+                mapOverlay.setAttribute('aria-hidden', 'true');
+                setFade(false);
+                setTimeout(() => { isTransitioning = false; }, 420);
+            }, 360);
+        };
+        const setMapLocation = (locationId) => {
+            document.querySelectorAll('.map-indicator-fill').forEach((indicator) => {
+                indicator.classList.toggle('active', indicator.dataset.location === locationId);
+                indicator.classList.toggle('travel-selected', false);
+            });
+        };
+
+        const chooseMapLocation = (locationId) => {
+            if (isTransitioning) return;
+            isTransitioning = true;
+            setMapLocation(locationId);
+            const selectedIndicator = document.querySelector(`.map-indicator-fill[data-location="${locationId}"]`);
+            if (selectedIndicator) selectedIndicator.classList.add('travel-selected');
+            setTimeout(() => {
+                mapFrame.classList.add('departing');
+                setFade(true);
+            }, 180);
+            setTimeout(() => {
+                if (locationId === 'home') {
+                    isMapOpen = false;
+                    mapTriggerArmed = false;
+                    mapOverlay.classList.remove('open');
+                    mapOverlay.setAttribute('aria-hidden', 'true');
+                    switchArea('lobby');
+                    const spawn = areaConfigs.lobby.mapReturnSpawn;
+                    characterGroup.position.set(spawn.x, 0, spawn.z);
+                } else if (locationId === 'shop' || locationId === 'circus') {
+                    isMapOpen = false;
+                    mapTriggerArmed = false;
+                    mapOverlay.classList.remove('open');
+                    mapOverlay.setAttribute('aria-hidden', 'true');
+                    switchArea(locationId);
+                }
+                mapFrame.classList.remove('departing');
+                document.querySelectorAll('.map-indicator-fill').forEach((indicator) => indicator.classList.remove('travel-selected'));
+                setFade(false);
+                setTimeout(() => { isTransitioning = false; }, 420);
+            }, 580);
+        };
+
+        document.querySelectorAll('.map-node').forEach((button) => {
+            button.addEventListener('click', () => chooseMapLocation(button.dataset.destination));
+        });
+        mapClose.addEventListener('click', closeMap);
+        mapOverlay.addEventListener('touchmove', (event) => event.preventDefault(), { passive: false });
+        if (openMapOnStart) openMap();
         const constrainPlayerToHomeGround = () => {
             const config = areaConfigs[activeArea];
             const bounds = config.bounds;
@@ -649,7 +977,17 @@
         };
 
         let baseHealth = 100;
+        let soulHealth = 100;
+                let soulCoins = 0;
         const baseHealthDisplay = document.getElementById('base-health-display');
+        const soulHealthDisplay = document.getElementById('soul-health-display');
+        const soulCoinDisplay = document.getElementById('soul-coin-display');
+
+        const updateHealthDisplays = () => {
+            baseHealthDisplay.innerText = "Base Health: " + Math.max(0, Math.floor(baseHealth));
+            soulHealthDisplay.innerText = "Soul Health: " + Math.max(0, Math.floor(soulHealth));
+            soulCoinDisplay.innerText = "Soul Coins: " + soulCoins;
+        };
 
         // --- 4.3 Enemy System ---
         let enemies = [];
@@ -678,6 +1016,7 @@
                 windupTime: 0.5,
                 cooldownTime: 1.2,
                 ritualDamage: 2,
+                coinValue: 2,
                 maxRitualHits: null,
                 zigzagAmplitude: 0,
                 zigzagFrequency: 0,
@@ -698,14 +1037,70 @@
                 windupTime: 0.38,
                 cooldownTime: 1.05,
                 ritualDamage: 2.5,
+                coinValue: 3,
                 maxRitualHits: 2,
                 zigzagAmplitude: 2.2,
                 zigzagFrequency: 5.2,
                 rotateToMove: true,
                 travelRotationOffset: 0
+            },
+            stalker: {
+                name: 'Stalker Ghost',
+                texture: loadGhostTexture('assets/character/ghostt/stalker ghost.png'),
+                width: 0.82,
+                height: 0.82,
+                hp: 3,
+                speed: 2.15,
+                contactRadius: 0.55,
+                separationRadius: 0.68,
+                ritualEnterRadius: 0,
+                ritualCancelRadius: 1.55,
+                windupTime: 0.42,
+                cooldownTime: 1.25,
+                ritualDamage: 0,
+                soulDamage: 5,
+                coinValue: 4,
+                maxRitualHits: null,
+                attackTarget: 'player',
+                playerAttackRadius: 1.05,
+                playerCancelRadius: 1.45,
+                zigzagAmplitude: 0.35,
+                zigzagFrequency: 3.2,
+                rotateToMove: false,
+                travelRotationOffset: 0
+            },
+            warden: {
+                name: 'Warden Ghost',
+                texture: loadGhostTexture('assets/character/ghostt/warden ghost.png'),
+                width: 1.08,
+                height: 1.08,
+                hp: 6,
+                speed: 1.35,
+                contactRadius: 0.72,
+                separationRadius: 0.9,
+                ritualEnterRadius: 3.35,
+                ritualCancelRadius: 3.6,
+                windupTime: 0.75,
+                cooldownTime: 1.45,
+                ritualDamage: 5,
+                soulDamage: 20,
+                coinValue: 5,
+                maxRitualHits: null,
+                attackTarget: 'ritual',
+                playerAreaTriggerRadius: 2.15,
+                playerAreaDamageRadius: 2.35,
+                playerAreaWindupTime: 0.85,
+                playerAreaCooldownTime: 2.6,
+                knockbackMultiplier: 0.28,
+                stunDuration: 0.1,
+                uninterruptibleAreaAttack: true,
+                zigzagAmplitude: 0,
+                zigzagFrequency: 0,
+                rotateToMove: false,
+                travelRotationOffset: 0
             }
         };
-        const activeGhostTypeId = 'skitter';
+        const activeGhostTypeId = 'warden';
         const activeGhostType = ghostTypes[activeGhostTypeId];
         const slashFrameCount = 9;
         const slashSpritesheetTexture = new THREE.TextureLoader().load('assets/character/slash.png');
@@ -737,6 +1132,36 @@
             side: THREE.DoubleSide
         });
         const hitParticles = [];
+        const ritualDustParticles = [];
+        const ritualDustMaterial = new THREE.MeshBasicMaterial({
+            color: 0xffffff,
+            transparent: true,
+            opacity: 0,
+            depthWrite: false,
+            side: THREE.DoubleSide
+        });
+        const createRitualDustParticle = () => {
+            const angle = Math.random() * Math.PI * 2;
+            const radius = THREE.MathUtils.randFloat(1.1, 3.9);
+            const dust = new THREE.Mesh(new THREE.PlaneGeometry(0.08, 0.08), ritualDustMaterial.clone());
+            dust.position.set(
+                areaConfigs.basement.ritualCenter.x + Math.cos(angle) * radius,
+                THREE.MathUtils.randFloat(0.18, 1.25),
+                areaConfigs.basement.ritualCenter.z + Math.sin(angle) * radius
+            );
+            dust.userData.phase = Math.random() * Math.PI * 2;
+            dust.userData.speed = THREE.MathUtils.randFloat(0.35, 0.75);
+            scene.add(dust);
+            ritualDustParticles.push({ mesh: dust, angle, radius, life: THREE.MathUtils.randFloat(1.7, 3.2), maxLife: 3.2 });
+        };
+        const wardenAreaGeometry = new THREE.CircleGeometry(1, 48);
+        const wardenAreaMaterial = new THREE.MeshBasicMaterial({
+            color: 0xff2848,
+            transparent: true,
+            opacity: 0,
+            depthWrite: false,
+            side: THREE.DoubleSide
+        });
 
         const getSlashWorldDirection = () => {
             const inputX = moveData.turn;
@@ -804,6 +1229,28 @@
                 slashArc.visible = false;
             }
 
+            if (activeArea === 'basement' && ritualDustParticles.length < 26 && Math.random() < dt * 9) {
+                createRitualDustParticle();
+            }
+            for (let i = ritualDustParticles.length - 1; i >= 0; i--) {
+                const particle = ritualDustParticles[i];
+                particle.life -= dt;
+                particle.angle += dt * particle.mesh.userData.speed;
+                const floatProgress = 1 - particle.life / particle.maxLife;
+                particle.mesh.position.x = areaConfigs.basement.ritualCenter.x + Math.cos(particle.angle) * particle.radius;
+                particle.mesh.position.z = areaConfigs.basement.ritualCenter.z + Math.sin(particle.angle) * particle.radius;
+                particle.mesh.position.y += dt * 0.12;
+                particle.mesh.quaternion.copy(camera.quaternion);
+                particle.mesh.material.opacity = activeArea === 'basement' ? Math.sin(Math.PI * Math.max(0, Math.min(1, floatProgress))) * 0.42 : 0;
+                particle.mesh.scale.setScalar(0.8 + Math.sin(performance.now() * 0.004 + particle.mesh.userData.phase) * 0.25);
+
+                if (particle.life <= 0 || activeArea !== 'basement') {
+                    scene.remove(particle.mesh);
+                    particle.mesh.material.dispose();
+                    particle.mesh.geometry.dispose();
+                    ritualDustParticles.splice(i, 1);
+                }
+            }
             for (let i = hitParticles.length - 1; i >= 0; i--) {
                 const particle = hitParticles[i];
                 particle.life -= dt;
@@ -844,6 +1291,15 @@
             const eShadow = new THREE.Mesh(shadowGeo, shadowMat);
             eShadow.rotation.x = -Math.PI / 2; eShadow.position.y = 0.01;
             enemyGroup.add(eShadow);
+
+            let areaTelegraph = null;
+            if (ghostType.playerAreaDamageRadius) {
+                areaTelegraph = new THREE.Mesh(wardenAreaGeometry, wardenAreaMaterial.clone());
+                areaTelegraph.rotation.x = -Math.PI / 2;
+                areaTelegraph.position.y = 0.035;
+                areaTelegraph.visible = false;
+                enemyGroup.add(areaTelegraph);
+            }
             
             const spawnSide = Math.floor(Math.random() * 3);
             const spawnZ = THREE.MathUtils.randFloat(-5.5, 12.5);
@@ -858,7 +1314,7 @@
             }
             
             scene.add(enemyGroup);
-            enemies.push({ type: ghostType, group: enemyGroup, mesh: enemyMesh, hp: ghostType.hp, state: 'chase', facing: 1, age: 0, zigzagPhase: Math.random() * Math.PI * 2, ritualHits: 0, windupTimer: 0, attackCooldownTimer: 0, attackTimer: 0, stunTimer: 0, knockback: { x: 0, z: 0 } });
+            enemies.push({ type: ghostType, group: enemyGroup, mesh: enemyMesh, areaTelegraph, hp: ghostType.hp, state: 'chase', facing: 1, age: 0, zigzagPhase: Math.random() * Math.PI * 2, ritualHits: 0, windupTimer: 0, areaWindupTimer: 0, areaCooldownTimer: 0, attackCooldownTimer: 0, attackTimer: 0, stunTimer: 0, knockback: { x: 0, z: 0 } });
         };
 
         // --- 5. Joystick Controller ---
@@ -922,22 +1378,40 @@
             }
         };
 
-        const destroyEnemy = (enemy, index) => {
+        const destroyEnemy = (enemy, index, awardCoins = true) => {
+            if (awardCoins) {
+                soulCoins += enemy.type.coinValue || 1;
+                updateHealthDisplays();
+            }
             scene.remove(enemy.group);
             enemy.mesh.material.dispose();
+            if (enemy.areaTelegraph) enemy.areaTelegraph.material.dispose();
             enemies.splice(index, 1);
         };
 
         const damageEnemy = (enemy, index, slashDir, damage, knockbackPower) => {
             enemy.hp -= damage;
-            enemy.stunTimer = 0.22;
-            enemy.state = 'chase';
-            enemy.windupTimer = 0;
-            enemy.attackTimer = 0;
-            enemy.attackCooldownTimer = 0;
-            enemy.knockback.x = slashDir.x * knockbackPower;
-            enemy.knockback.z = slashDir.z * knockbackPower;
-            enemy.mesh.material.color.setHex(0xffffff);
+            const isAreaLocked = enemy.state === 'playerAreaWindup' && enemy.type.uninterruptibleAreaAttack;
+            const canRetaliate = enemy.hp > 0 && enemy.type.playerAreaTriggerRadius && enemy.areaCooldownTimer <= 0 && !isAreaLocked;
+            const knockbackMultiplier = (isAreaLocked || canRetaliate) ? 0 : (enemy.type.knockbackMultiplier ?? 1);
+            enemy.stunTimer = (isAreaLocked || canRetaliate) ? 0 : (enemy.type.stunDuration ?? 0.22);
+            if (!isAreaLocked) {
+                if (canRetaliate) {
+                    enemy.state = 'playerAreaWindup';
+                    enemy.areaWindupTimer = enemy.type.playerAreaWindupTime || 0.65;
+                    enemy.windupTimer = 0;
+                    enemy.attackTimer = 0;
+                    enemy.attackCooldownTimer = 0;
+                } else {
+                    enemy.state = 'chase';
+                    enemy.windupTimer = 0;
+                    enemy.attackTimer = 0;
+                    enemy.attackCooldownTimer = 0;
+                }
+            }
+            enemy.knockback.x = slashDir.x * knockbackPower * knockbackMultiplier;
+            enemy.knockback.z = slashDir.z * knockbackPower * knockbackMultiplier;
+            enemy.mesh.material.color.setHex(canRetaliate ? 0xff9a9a : 0xffffff);
             createHitBurst(enemy.group.position);
             triggerScreenShake(comboStep === 3 ? 0.3 : 0.2, comboStep === 3 ? 0.15 : 0.11);
 
@@ -1047,7 +1521,7 @@
             slashRecoveryTimer = Math.max(0, slashRecoveryTimer - dt);
             
             // --- Player Movement ---
-            let currentSpeed = slashRecoveryTimer > 0 ? moveSpeed * 0.62 : moveSpeed;
+            let currentSpeed = (isMapOpen || isTransitioning) ? 0 : (slashRecoveryTimer > 0 ? moveSpeed * 0.62 : moveSpeed);
             if (isDashing) {
                 dashTimer -= dt;
                 if (dashTimer <= 0) isDashing = false;
@@ -1068,8 +1542,21 @@
             resolvePlayerEnemyCollision();
             constrainPlayerToHomeGround();
 
-            if (activeArea === 'basement' && isPointInsideRect(characterGroup.position, areaConfigs.basement.nextAreaCollider)) {
-                switchArea('lobby');
+            if (!isMapOpen && activeArea === 'basement' && isPointInsideRect(characterGroup.position, areaConfigs.basement.nextAreaCollider)) {
+                transitionToArea('lobby');
+            }
+
+            if (activeArea === 'lobby') {
+                const isInsideMapTrigger = isPointInsideRect(characterGroup.position, areaConfigs.lobby.mapCollider);
+                if (!isInsideMapTrigger) mapTriggerArmed = true;
+                if (!isMapOpen && mapTriggerArmed && isInsideMapTrigger) openMap();
+                if (!isMapOpen && isPointInsideRect(characterGroup.position, areaConfigs.lobby.basementCollider)) transitionToArea('basement');
+            }
+
+            if (activeArea === 'shop' || activeArea === 'circus') {
+                const isInsideAreaMapTrigger = isPointInsideRect(characterGroup.position, areaConfigs[activeArea].mapCollider);
+                if (!isInsideAreaMapTrigger) mapTriggerArmed = true;
+                if (!isMapOpen && mapTriggerArmed && isInsideAreaMapTrigger) openMap();
             }
 
             const horizontalIntent = isDashing ? lastMoveDir.turn : moveData.turn;
@@ -1098,7 +1585,7 @@
             character.rotateZ(soulTilt + slashTilt);
             updateSlashVfx(dt);
             // --- Enemy AI & Spawning ---
-            if (activeArea === 'basement' && baseHealth > 0) {
+            if (activeArea === 'basement' && baseHealth > 0 && soulHealth > 0) {
                 enemySpawnTimer += dt;
                 if (enemySpawnTimer >= enemySpawnInterval && totalEnemiesSpawned < maxEnemies) {
                     spawnEnemy();
@@ -1118,9 +1605,49 @@
                     const toRitualX = ex - ritualTarget.x;
                     const toRitualZ = ez - ritualTarget.z;
                     const distToCenter = Math.sqrt(toRitualX * toRitualX + toRitualZ * toRitualZ);
+                    const attackTarget = enemy.type.attackTarget || 'ritual';
+                    const targetX = attackTarget === 'player' ? characterGroup.position.x : ritualTarget.x;
+                    const targetZ = attackTarget === 'player' ? characterGroup.position.z : ritualTarget.z;
+                    const toTargetX = ex - targetX;
+                    const toTargetZ = ez - targetZ;
+                    const distToTarget = Math.sqrt(toTargetX * toTargetX + toTargetZ * toTargetZ);
+                    const enterRadius = attackTarget === 'player' ? enemy.type.playerAttackRadius : enemy.type.ritualEnterRadius;
+                    const cancelRadius = attackTarget === 'player' ? enemy.type.playerCancelRadius : enemy.type.ritualCancelRadius;
+                    const toPlayerX = ex - characterGroup.position.x;
+                    const toPlayerZ = ez - characterGroup.position.z;
+                    const distToPlayer = Math.sqrt(toPlayerX * toPlayerX + toPlayerZ * toPlayerZ);
+                    enemy.areaCooldownTimer = Math.max(0, enemy.areaCooldownTimer - dt);
+                    if (enemy.areaTelegraph) enemy.areaTelegraph.visible = false;
 
                     enemy.mesh.quaternion.copy(camera.quaternion);
 
+                    if (enemy.state === 'playerAreaWindup') {
+                        enemy.areaWindupTimer -= dt;
+                        enemy.mesh.material.color.setHex(0xff5b70);
+                        const areaRadius = enemy.type.playerAreaDamageRadius || 1.5;
+                        if (enemy.areaTelegraph) {
+                            const progress = 1 - Math.max(0, enemy.areaWindupTimer) / enemy.type.playerAreaWindupTime;
+                            enemy.areaTelegraph.visible = true;
+                            enemy.areaTelegraph.scale.setScalar(areaRadius * (0.82 + progress * 0.18));
+                            enemy.areaTelegraph.material.opacity = 0.16 + Math.sin(enemy.age * 36) * 0.05;
+                        }
+                        const pulse = 1 + Math.sin(enemy.age * 40) * 0.08;
+                        setEnemyVisualScale(enemy, pulse);
+                        if (enemy.areaWindupTimer <= 0) {
+                            if (distToPlayer <= areaRadius) {
+                                soulHealth -= enemy.type.soulDamage || 10;
+                                updateHealthDisplays();
+                                triggerScreenShake(0.34, 0.16);
+                                createHitBurst(characterGroup.position);
+                            }
+                            enemy.areaCooldownTimer = enemy.type.playerAreaCooldownTime || 2;
+                            enemy.state = 'chase';
+                            enemy.mesh.material.color.setHex(0xffffff);
+                            setEnemyVisualScale(enemy, 1);
+                            if (enemy.areaTelegraph) enemy.areaTelegraph.visible = false;
+                        }
+                        continue;
+                    }
                     if (enemy.stunTimer > 0) {
                         enemy.stunTimer -= dt;
                         enemy.group.position.x += enemy.knockback.x * dt;
@@ -1132,8 +1659,14 @@
                         continue;
                     }
 
+                    if (enemy.state === 'chase' && enemy.type.playerAreaTriggerRadius && enemy.areaCooldownTimer <= 0 && distToPlayer < enemy.type.playerAreaTriggerRadius) {
+                        enemy.state = 'playerAreaWindup';
+                        enemy.areaWindupTimer = enemy.type.playerAreaWindupTime || 0.65;
+                        enemy.mesh.material.color.setHex(0xff9a9a);
+                        continue;
+                    }
                     if (enemy.state === 'windup') {
-                        if (distToCenter > enemy.type.ritualCancelRadius) {
+                        if (distToTarget > cancelRadius) {
                             enemy.state = 'chase';
                             enemy.mesh.material.color.setHex(0xffffff);
                             setEnemyVisualScale(enemy, 1);
@@ -1144,14 +1677,20 @@
                         const pulse = 1 + Math.sin(enemy.windupTimer * 45) * 0.08;
                         setEnemyVisualScale(enemy, pulse);
                         if (enemy.windupTimer <= 0) {
-                            baseHealth -= enemy.type.ritualDamage;
-                            baseHealthDisplay.innerText = "Base Health: " + Math.max(0, Math.floor(baseHealth));
-                            triggerScreenShake(0.28, 0.14);
-                            enemy.ritualHits++;
-                            if (enemy.type.maxRitualHits && enemy.ritualHits >= enemy.type.maxRitualHits) {
-                                createHitBurst(enemy.group.position);
-                                destroyEnemy(enemy, i);
-                                continue;
+                            if (attackTarget === 'player') {
+                                soulHealth -= enemy.type.soulDamage || 8;
+                                updateHealthDisplays();
+                                triggerScreenShake(0.24, 0.13);
+                            } else {
+                                baseHealth -= enemy.type.ritualDamage;
+                                updateHealthDisplays();
+                                triggerScreenShake(0.28, 0.14);
+                                enemy.ritualHits++;
+                                if (enemy.type.maxRitualHits && enemy.ritualHits >= enemy.type.maxRitualHits) {
+                                    createHitBurst(enemy.group.position);
+                                    destroyEnemy(enemy, i, false);
+                                    continue;
+                                }
                             }
                             enemy.state = 'cooldown';
                             enemy.attackCooldownTimer = enemy.type.cooldownTime;
@@ -1164,7 +1703,7 @@
                     if (enemy.state === 'cooldown') {
                         enemy.attackCooldownTimer -= dt;
                         enemy.mesh.material.color.setHex(0xbb6d88);
-                        if (distToCenter > enemy.type.ritualCancelRadius) {
+                        if (distToTarget > cancelRadius) {
                             enemy.state = 'chase';
                         } else if (enemy.attackCooldownTimer <= 0) {
                             enemy.state = 'windup';
@@ -1174,13 +1713,13 @@
                     }
                     enemy.mesh.material.color.setHex(0xffffff);
                     setEnemyVisualScale(enemy, 1);
-                    if (distToCenter < enemy.type.ritualEnterRadius) {
+                    if (distToTarget < enterRadius) {
                         enemy.state = 'windup';
                         enemy.windupTimer = enemy.type.windupTime;
                         enemy.attackTimer = 0;
-                    } else if (distToCenter > 0) {
-                        const directX = -(toRitualX / distToCenter);
-                        const directZ = -(toRitualZ / distToCenter);
+                    } else if (distToTarget > 0) {
+                        const directX = -(toTargetX / distToTarget);
+                        const directZ = -(toTargetZ / distToTarget);
                         const weaveAmplitude = enemy.type.zigzagAmplitude || 0;
                         const weaveFrequency = enemy.type.zigzagFrequency || 0;
                         const weaveTime = enemy.age * weaveFrequency + enemy.zigzagPhase;
@@ -1208,8 +1747,14 @@
                     }
                 }
             } else if (activeArea === 'basement') {
-                baseHealthDisplay.innerText = "Base Destroyed! Game Over.";
-                baseHealthDisplay.style.color = "red";
+                if (baseHealth <= 0) {
+                    baseHealthDisplay.innerText = "Base Destroyed! Game Over.";
+                    baseHealthDisplay.style.color = "red";
+                }
+                if (soulHealth <= 0) {
+                    soulHealthDisplay.innerText = "Soul Faded! Night Failed.";
+                    soulHealthDisplay.style.color = "#ff7070";
+                }
             }
             let shakeX = 0;
             let shakeZ = 0;
@@ -1250,3 +1795,20 @@
     </script>
 </body>
 </html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
