@@ -757,6 +757,8 @@
             CircusProps: new THREE.MeshBasicMaterial({ map: circusPropsTexture, transparent: true, alphaTest: 0.05, depthWrite: false, side: THREE.DoubleSide }),
             CircusTent: new THREE.MeshBasicMaterial({ map: circusTentTexture, transparent: true, alphaTest: 0.05, depthWrite: false, side: THREE.DoubleSide }),
             CircusPopcorn: new THREE.MeshBasicMaterial({ map: circusPopcornTexture, transparent: true, alphaTest: 0.05, depthWrite: false, side: THREE.DoubleSide }),
+            CircusTentInteriorFloor: new THREE.MeshBasicMaterial({ color: 0x4b2235, side: THREE.DoubleSide }),
+            CircusTentInteriorProp: new THREE.MeshBasicMaterial({ color: 0xd6b36f, side: THREE.DoubleSide }),
             CircusGround: new THREE.MeshBasicMaterial({ color: 0x6f4a68, side: THREE.DoubleSide }),
             Default: new THREE.MeshBasicMaterial({ color: 0xb8c7bd, side: THREE.DoubleSide })
         };
@@ -773,14 +775,19 @@
         const circusGroup = new THREE.Group();
         circusGroup.name = 'CircusScene';
         circusGroup.visible = false;
+        const circusTentGroup = new THREE.Group();
+        circusTentGroup.name = 'CircusTentScene';
+        circusTentGroup.visible = false;
         scene.add(basementGroup);
         scene.add(lobbyGroup);
         scene.add(shopGroup);
         scene.add(circusGroup);
+        scene.add(circusTentGroup);
         let activeArea = 'basement';
         let lobbyReady = false;
         let shopReady = false;
         let circusReady = false;
+        let circusTentReady = false;
         const shopStarterCard = {
             mesh: null,
             center: new THREE.Vector3(-4.856, 0, 3.806),
@@ -961,6 +968,10 @@
             if (sceneStyle === 'shop' && (name.includes('_m2') || materialKey.includes('lambert5'))) return layoutMaterials.ShopM2;
             if (sceneStyle === 'shop' && (name.includes('_m3') || name.includes('-m3') || materialKey.includes('lambert7'))) return layoutMaterials.ShopM3;
             if (sceneStyle === 'shop' && (name === 'base' || name === 'base2' || name.includes('shop_beach'))) return layoutMaterials.ShopSand;
+            if (sceneStyle === 'circusTent') {
+                if (name.includes('staff')) return layoutMaterials.CircusTentInteriorProp;
+                return layoutMaterials.CircusTentInteriorFloor;
+            }
             if (sceneStyle === 'circus') {
                 if (name.includes('popcorn') || materialKey === 'material.009') return layoutMaterials.CircusPopcorn;
                 if (name.includes('tent') || name.includes('m3') || materialKey === 'material') return layoutMaterials.CircusTent;
@@ -1329,7 +1340,8 @@
                 shopReady = true;
             });
 
-        fetch('assets/environment/circus%20enviornment.obj?v=20260905a')
+
+        fetch('assets/environment/Circus%20scene%20textures/circus%20enviornment.obj?v=20260906a')
             .then((response) => {
                 if (!response.ok) throw new Error('Could not load circus enviornment.obj');
                 return response.text();
@@ -1337,6 +1349,15 @@
             .then((objText) => {
                 addObjLayoutToScene(objText, circusGroup, 'circus');
                 circusReady = true;
+            });
+        fetch('assets/environment/inside%20circus%20tent%20scene.obj?v=20260905a')
+            .then((response) => {
+                if (!response.ok) throw new Error('Could not load inside circus tent scene.obj');
+                return response.text();
+            })
+            .then((objText) => {
+                addObjLayoutToScene(objText, circusTentGroup, 'circusTent');
+                circusTentReady = true;
             });
 
         // --- 4.2 Central Base State ---
@@ -1365,7 +1386,13 @@
                 bounds: { minX: -19.675, maxX: 17.465, minZ: -7.742, maxZ: 8.691 },
                 spawn: { x: -16.639, z: -0.175 },
                 mapCollider: { minX: -19.774, maxX: -18.426, minZ: -1.833, maxZ: 1.22 },
-                tentCollider: { minX: 10.877, maxX: 12.47, minZ: -6.669, maxZ: -5.691 }
+                tentCollider: { minX: 10.877, maxX: 12.47, minZ: -6.669, maxZ: -5.691 },
+                tentReturnSpawn: { x: 11.67, z: -5.25 }
+            },
+            circusTent: {
+                bounds: { minX: -6.45, maxX: 6.45, minZ: -6.45, maxZ: 6.45 },
+                spawn: { x: 0, z: 4.95 },
+                exitCollider: { minX: -1.65, maxX: 1.65, minZ: 5.78, maxZ: 6.55 }
             }
         };
 
@@ -1413,12 +1440,14 @@
             if (areaName === 'lobby' && !lobbyReady) return;
             if (areaName === 'shop' && !shopReady) return;
             if (areaName === 'circus' && !circusReady) return;
+            if (areaName === 'circusTent' && !circusTentReady) return;
 
             activeArea = areaName;
             basementGroup.visible = areaName === 'basement';
             lobbyGroup.visible = areaName === 'lobby';
             shopGroup.visible = areaName === 'shop';
             circusGroup.visible = areaName === 'circus';
+            circusTentGroup.visible = areaName === 'circusTent';
 
             sleepingBody.visible = areaName === 'basement';
             eyeGlowBody.visible = areaName === 'basement';
@@ -1450,6 +1479,7 @@
         let mapTriggerArmed = true;
         const openMapOnStart = false;
         let isTransitioning = false;
+        let pendingTransitionSpawn = null;
         const mapProgress = { circusUnlocked: false, pendingCircusReveal: false };
 
         const setFade = (enabled) => {
@@ -1463,12 +1493,18 @@
             waveGesture.classList.add('active');
             setTimeout(() => waveGesture.classList.remove('active'), 2200);
         };
-        const transitionToArea = (areaName) => {
+        const transitionToArea = (areaName, spawnOverride = null) => {
             if (isTransitioning || activeArea === areaName) return;
+            pendingTransitionSpawn = spawnOverride;
             isTransitioning = true;
             setFade(true);
             setTimeout(() => {
                 switchArea(areaName);
+                if (pendingTransitionSpawn) {
+                    characterGroup.position.set(pendingTransitionSpawn.x, 0, pendingTransitionSpawn.z);
+                    lastValidPlayerPosition.copy(characterGroup.position);
+                    pendingTransitionSpawn = null;
+                }
                 setFade(false);
                 setTimeout(() => { isTransitioning = false; }, 420);
             }, 390);
@@ -2299,6 +2335,14 @@
                 const isInsideAreaMapTrigger = isPointInsideRect(characterGroup.position, areaConfigs[activeArea].mapCollider);
                 if (!isInsideAreaMapTrigger) mapTriggerArmed = true;
                 if (!isMapOpen && mapTriggerArmed && isInsideAreaMapTrigger) openMap();
+            }
+
+            if (activeArea === 'circus' && isPointInsideRect(characterGroup.position, areaConfigs.circus.tentCollider)) {
+                transitionToArea('circusTent');
+            }
+
+            if (activeArea === 'circusTent' && isPointInsideRect(characterGroup.position, areaConfigs.circusTent.exitCollider)) {
+                transitionToArea('circus', areaConfigs.circus.tentReturnSpawn);
             }
 
             if (activeArea === 'shop' && !shopStarterCard.purchased && !shopStarterCard.panelOpen && !shopStarterCard.buying) {

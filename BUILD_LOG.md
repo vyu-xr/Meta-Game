@@ -172,3 +172,6 @@
 - Rebuilt human_form.glb from the updated character switch.fbx while preserving the existing Idle/Walk/Jump animation clip setup and bumped the model cache version.
 - Switched the Human Form runtime loader to the newly updated human_form.glb asset and bumped the cache version for browser/mobile testing.
 - Updated the Circus destination to load the new circus enviornment OBJ, mapped its local m1/m2/m3/m5/popcorn textures, and refreshed spawn/map/walking markers from the new export.
+- Converted the inside circus tent FBX into a local OBJ/MTL, added a Circus Tent interior scene, and wired the outside tent collider to fade into the interior with an exit back to Circus.
+- Fixed the Circus Tent interior area config and transition spawn override so exiting the tent returns the player beside the outside tent entrance.
+- Fixed Circus outside scene loading after moving the circus environment OBJ/MTL into the Circus scene textures folder; restored the circusGroup fetch before the tent-interior fetch.
