@@ -142,3 +142,33 @@
 - Bumped the Candle A fire texture cache version and added a render-loop visibility failsafe so the lit candle remains enabled after night clear.
 - Refreshed the updated home lobby scene OBJ and verified its spawn/map/basement marker positions against the current area config.
 - Applied the Home Lobby room 2 base texture to the room2_base_ OBJ object using the exported UVs.
+- Updated the scaled-down home lobby scene, refreshed its cache version, and retuned lobby bounds/spawn/map/basement colliders from the new OBJ markers.
+- Added a small top-right clock UI using local clock/indicator assets, with the triangle indicator rotating around the clock edge from the clock center.
+- Refreshed the home lobby scene cache after the latest export and applied the local sofa texture to the new sofa OBJ object.
+- Refreshed the home lobby scene again after the latest export; existing spawn and transition collider markers still matched the new OBJ.
+- Applied newly added home lobby assets to their OBJ objects: shelf, plant position, exit door mat, and grandma door mat.
+- Converted the latest home lobby plant and shelf placement markers into generated textured prop planes with larger controlled sizes while hiding the marker meshes.
+- Updated the home lobby to use the latest OBJ prop planes directly for plant/shelf position, size, and rotation; mapped the second plant marker to plant 2 art.
+- Refreshed the home lobby scene after another prop placement update; transition colliders stayed unchanged while latest plant/shelf positions come from the OBJ.
+- Added a darker offset duplicate behind the home lobby shelf prop to fake visual thickness from the current camera angle.
+- Refreshed the shop beach scene after the latest export and retuned shop bounds, spawn, and map-return collider from OBJ markers.
+- Refreshed the shop beach scene again and switched shop movement bounds to the new area_wher_user_can_move_hide_ marker from the OBJ.
+- Refreshed the shop beach scene cache after the latest export; shop movement/spawn/map collider markers remained unchanged.
+- Changed shop player movement from rectangular bounds to the exact triangulated area_wher_user_can_move_hide_ OBJ plane, snapping back to the last valid position when outside.
+- Added shop scene m1/m2 texture materials and routed updated shop OBJ objects ending in _m1/_m2 to the matching local textures.
+- Refreshed the expanded shop beach scene and added ShopM3 texture routing for new -m3 props like the tarot granny, tent, cards, carpet, and background.
+- Fixed latest shop texture routing by mapping exported material names lambert4/lambert5/lambert7 to ShopM1/ShopM2/ShopM3, since the newest OBJ removed some _m1/_m2 object suffixes.
+- Fixed shop m3 billboard props like tarot granny and tent by forcing double-sided transparent rendering, disabling depth testing, and giving m3 meshes higher render order.
+- Reverted the experimental shop m3 depth-test/render-order override because it caused gameplay sprites to appear under shop props.
+- Added a targeted tarot granny visibility fix in the shop scene by cloning its material, lowering alpha test, keeping it double-sided, and nudging it slightly forward without changing all m3 props.
+- Refreshed the shop m3 atlas texture after the latest art update by bumping its local cache version.
+- Added the required starter shop card interaction: approaching base_card-m3 auto-focuses the soul, opens a mandatory 10 Soul Coin purchase panel, spends coins, and animates the card disappearing after purchase.
+- Refined the starter shop card purchase: moved the soul focus point closer to base_card-m3, simplified the bottom UI to price plus buy, and added a cancel button that re-arms after stepping away.
+- Mapped the new local Human form card - 10 shop PNG directly onto the base_card-m3 shop mesh so the purchasable card appears in-scene.
+- Updated the shop starter purchase so the renamed soul_platform_-m3 object acts as the in-scene trigger/platform while the card art appears only in the bottom purchase UI and animates away on buy.
+- Repositioned the shop starter purchase UI to the center of the screen for a clearer tarot-card buying moment.
+- Added map progression: Circus starts locked on the shop/house map, buying the Human Form card queues a Circus unlock, and opening the map reveals the Circus destination with an animated indicator pop.
+- Converted the supplied FBX character/animation set into a local human_form.glb, vendored GLTFLoader, and made the Human Form card switch the controllable soul into an animated 3D human form using Idle/Walk clips.
+- Rebuilt human_form.glb from the updated character switch.fbx while preserving the existing Idle/Walk/Jump animation clip setup and bumped the model cache version.
+- Switched the Human Form runtime loader to the newly updated human_form.glb asset and bumped the cache version for browser/mobile testing.
+- Updated the Circus destination to load the new circus enviornment OBJ, mapped its local m1/m2/m3/m5/popcorn textures, and refreshed spawn/map/walking markers from the new export.

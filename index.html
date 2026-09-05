@@ -118,6 +118,33 @@
             text-shadow: 1px 1px 2px black;
             pointer-events: none;
         }
+        #night-clock {
+            position: absolute;
+            top: 18px;
+            right: 18px;
+            width: 74px;
+            height: 74px;
+            z-index: 12;
+            pointer-events: none;
+        }
+        #night-clock-face {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            width: 74px;
+            height: auto;
+            transform: translate(-50%, -50%);
+            filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.58));
+        }
+        #night-clock-indicator {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            width: 13px;
+            height: 13px;
+            transform-origin: center center;
+            filter: drop-shadow(0 0 5px rgba(255, 235, 190, 0.7));
+        }
         #map-overlay {
             position: absolute;
             inset: 0;
@@ -192,6 +219,24 @@
         }
         .map-indicator-fill.active {
             display: block;
+        }
+        .map-location-locked {
+            opacity: 0;
+            pointer-events: none;
+        }
+        .map-node.map-location-locked {
+            display: none;
+        }
+        .map-unlock-reveal {
+            animation: mapUnlockReveal 1.05s cubic-bezier(.16, .92, .28, 1) both;
+        }
+        .map-indicator-fill.map-unlock-reveal {
+            display: block;
+        }
+        @keyframes mapUnlockReveal {
+            0% { opacity: 0; transform: translate(-50%, -50%) scale(0.35) rotate(-12deg); filter: drop-shadow(0 0 0 rgba(255, 232, 160, 0)); }
+            45% { opacity: 1; transform: translate(-50%, -50%) scale(1.75) rotate(5deg); filter: drop-shadow(0 0 18px rgba(255, 232, 160, 0.95)); }
+            100% { opacity: 1; transform: translate(-50%, -50%) scale(1); filter: drop-shadow(0 0 6px rgba(201, 251, 255, 0.78)) drop-shadow(0 1px 2px rgba(0, 0, 0, 0.65)); }
         }
         #map-close {
             position: absolute;
@@ -269,6 +314,108 @@
         #fade-overlay.active {
             opacity: 1;
         }
+        #shop-purchase-panel {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            width: min(78vw, 330px);
+            transform: translate(-50%, -42%) scale(0.94);
+            opacity: 0;
+            z-index: 46;
+            pointer-events: none;
+            padding: 14px 16px 16px;
+            box-sizing: border-box;
+            border: 1px solid rgba(255, 225, 170, 0.38);
+            border-radius: 8px;
+            background: linear-gradient(180deg, rgba(28, 18, 24, 0.94), rgba(10, 7, 12, 0.96));
+            box-shadow: 0 12px 34px rgba(0, 0, 0, 0.58), inset 0 0 28px rgba(255, 198, 98, 0.06);
+            color: #fff2d4;
+            font-family: sans-serif;
+            transition: opacity 0.22s ease, transform 0.28s cubic-bezier(.2, 1.12, .28, 1);
+            touch-action: manipulation;
+        }
+        #shop-purchase-panel.open {
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1);
+            pointer-events: auto;
+        }
+        #shop-purchase-title {
+            margin: 0 42px 6px 0;
+            font-size: 18px;
+            font-weight: 800;
+            letter-spacing: 0;
+        }
+        #shop-purchase-copy {
+            margin: 0 0 12px;
+            color: rgba(255, 242, 212, 0.72);
+            font-size: 13px;
+            line-height: 1.35;
+        }
+        #shop-purchase-close {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 32px;
+            height: 32px;
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.08);
+            color: rgba(255, 255, 255, 0.75);
+            font-size: 18px;
+        }
+        #shop-purchase-card-art {
+            display: block;
+            width: min(56vw, 210px);
+            max-height: 46vh;
+            object-fit: contain;
+            margin: 0 auto 10px;
+            filter: drop-shadow(0 10px 18px rgba(0, 0, 0, 0.55)) drop-shadow(0 0 12px rgba(255, 205, 104, 0.24));
+            transform-origin: center bottom;
+            transition: transform 0.18s ease, opacity 0.18s ease;
+        }
+        #shop-purchase-panel.buying #shop-purchase-card-art {
+            animation: shopCardBuy 0.62s ease both;
+        }
+        @keyframes shopCardBuy {
+            0% { opacity: 1; transform: translateY(0) scale(1); }
+            42% { opacity: 1; transform: translateY(-12px) scale(1.08); }
+            100% { opacity: 0; transform: translateY(18px) scale(0.18); }
+        }
+        #shop-purchase-price {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 30px;
+            margin: 4px 34px 12px 0;
+            color: #ffe1a0;
+            font-size: 18px;
+            font-weight: 800;
+            text-shadow: 0 0 8px rgba(255, 207, 99, 0.32);
+        }
+        #shop-purchase-buy {
+            width: 100%;
+            height: 48px;
+            border: 0;
+            border-radius: 8px;
+            background: linear-gradient(180deg, #ffcf63, #b97822);
+            color: #22120b;
+            font-size: 17px;
+            font-weight: 900;
+            box-shadow: 0 6px 16px rgba(178, 98, 21, 0.38);
+        }
+        #shop-purchase-buy:disabled {
+            background: linear-gradient(180deg, #7a6d5d, #443831);
+            color: rgba(255, 242, 212, 0.52);
+            box-shadow: none;
+        }
+        #shop-purchase-panel.shake {
+            animation: shopPanelShake 0.2s linear both;
+        }
+        @keyframes shopPanelShake {
+            0%, 100% { transform: translate(-50%, -50%) scale(1); }
+            25% { transform: translate(calc(-50% - 6px), -50%) scale(1); }
+            75% { transform: translate(calc(-50% + 6px), -50%) scale(1); }
+        }
         #map-overlay {
             background: #000;
         }
@@ -317,18 +464,22 @@
         <span id="soul-health-display" style="color: #cde9ff; font-weight: bold;">Soul Health: 100</span><br>
         <span id="soul-coin-display" style="color: #ffe3a3; font-weight: bold;">Soul Coins: 0</span>
     </div>
+    <div id="night-clock" aria-hidden="true">
+        <img id="night-clock-face" src="assets/ui/clock.png?v=20260904a" alt="">
+        <img id="night-clock-indicator" src="assets/ui/clock%20indicator.png?v=20260904a" alt="">
+    </div>
     <canvas id="game-canvas"></canvas>
     <div id="map-overlay" aria-hidden="true">
         <div id="map-frame">
-            <img id="map-image" src="assets/environment/lock two places.jpg" alt="Travel map">
+            <img id="map-image" src="assets/environment/unlock%20shop%20%2C%20house%20map.jpg?v=20260905a" alt="Travel map">
             <button id="map-close" type="button">x</button>
-            <span class="map-indicator" style="left: 55%; top: 73%;"></span>
+            <span class="map-indicator" data-location="shop" style="left: 55%; top: 73%;"></span>
             <span class="map-indicator-fill" data-location="shop" style="left: 55%; top: 73%;"></span>
             <button class="map-node" data-destination="shop" type="button" aria-label="Travel to shop" style="left: 55%; top: 73%;">SHOP</button>
-            <span class="map-indicator" style="left: 82%; top: 46.3%;"></span>
-            <span class="map-indicator-fill" data-location="circus" style="left: 82%; top: 46.3%;"></span>
-            <button class="map-node" data-destination="circus" type="button" aria-label="Travel to circus" style="left: 82%; top: 46.3%;">CIRCUS</button>
-            <span class="map-indicator" style="left: 55%; top: 52%;"></span>
+            <span class="map-indicator map-location-locked" data-location="circus" style="left: 82%; top: 46.3%;"></span>
+            <span class="map-indicator-fill map-location-locked" data-location="circus" style="left: 82%; top: 46.3%;"></span>
+            <button class="map-node map-location-locked" data-destination="circus" type="button" aria-label="Travel to circus" style="left: 82%; top: 46.3%;" disabled>CIRCUS</button>
+            <span class="map-indicator" data-location="home" style="left: 55%; top: 52%;"></span>
             <span class="map-indicator-fill active" data-location="home" style="left: 55%; top: 52%;"></span>
             <button class="map-node" data-destination="home" type="button" aria-label="Travel home" style="left: 55%; top: 52%;">HOME</button>
         </div>
@@ -336,6 +487,12 @@
     <div id="scene-vignette" class="ritual-active"></div>
     <div id="wave-gesture" aria-hidden="true"><div id="wave-gesture-label"></div></div>
     <div id="fade-overlay" class="active"></div>
+    <div id="shop-purchase-panel" aria-hidden="true">
+        <button id="shop-purchase-close" type="button" aria-label="Cancel purchase">x</button>
+        <img id="shop-purchase-card-art" src="assets/shop/Human%20form%20card%20-%2010.png?v=20260905a" alt="">
+        <div id="shop-purchase-price">10 Soul Coins</div>
+        <button id="shop-purchase-buy" type="button">BUY</button>
+    </div>
     <!-- Zone for nipple.js to bind to -->
     <div id="joystick-zone"></div>
     <div id="dash-button">DASH</div>
@@ -344,7 +501,8 @@
 
     <!-- Local dependencies inside vendor folder to avoid network requests -->
     <script src="vendor/three.min.js"></script>
-    <script src="vendor/nipplejs.min.js"></script>
+        <script src="vendor/GLTFLoader.js"></script>
+<script src="vendor/nipplejs.min.js"></script>
     
     <script>
         // --- 1. Basic Setup ---
@@ -441,6 +599,61 @@
         dropShadow.position.y = 0.01; // Slightly above ground
         characterGroup.add(dropShadow);
 
+
+        let humanFormRoot = null;
+        let humanFormMixer = null;
+        const humanFormActions = {};
+        let humanFormActionName = '';
+        let humanFormUnlocked = false;
+
+        const playHumanFormAction = (name) => {
+            if (!humanFormActions[name] || humanFormActionName === name) return;
+            const nextAction = humanFormActions[name];
+            nextAction.reset().play();
+            if (humanFormActions[humanFormActionName]) {
+                humanFormActions[humanFormActionName].fadeOut(0.16);
+                nextAction.fadeIn(0.16);
+            }
+            humanFormActionName = name;
+        };
+
+        const activateHumanForm = () => {
+            humanFormUnlocked = true;
+            character.visible = false;
+            if (humanFormRoot) {
+                humanFormRoot.visible = true;
+                playHumanFormAction('Idle');
+            }
+        };
+
+        if (THREE.GLTFLoader) {
+            const humanLoader = new THREE.GLTFLoader();
+            humanLoader.load('assets/character/3d/human_form.glb?v=20260905c', (gltf) => {
+                humanFormRoot = gltf.scene;
+                humanFormRoot.name = 'HumanForm3D';
+                humanFormRoot.visible = false;
+                humanFormRoot.position.set(0, 0, 0);
+                humanFormRoot.scale.setScalar(1.0);
+                humanFormRoot.traverse((node) => {
+                    if (node.isMesh) {
+                        node.frustumCulled = false;
+                        node.castShadow = false;
+                        node.receiveShadow = false;
+                    }
+                });
+                characterGroup.add(humanFormRoot);
+
+                humanFormMixer = new THREE.AnimationMixer(humanFormRoot);
+                gltf.animations.forEach((clip) => {
+                    const clipKey = clip.name.toLowerCase().includes('walk') ? 'Walk' : (clip.name.toLowerCase().includes('jump') ? 'Jump' : 'Idle');
+                    const action = humanFormMixer.clipAction(clip);
+                    action.enabled = true;
+                    action.setLoop(THREE.LoopRepeat);
+                    humanFormActions[clipKey] = action;
+                });
+                if (humanFormUnlocked) activateHumanForm();
+            });
+        }
         scene.add(characterGroup);
 
         const sleepingTexture = new THREE.TextureLoader().load('assets/character/sleep character.png?v=20260903a');
@@ -483,15 +696,41 @@
         scene.add(ambientLight);
 
         // --- 4.1 Blender Base Layout ---
+        const makeUiTexture = (path) => {
+            const texture = new THREE.TextureLoader().load(path);
+            texture.minFilter = THREE.LinearFilter;
+            texture.magFilter = THREE.LinearFilter;
+            texture.wrapS = THREE.ClampToEdgeWrapping;
+            texture.wrapT = THREE.ClampToEdgeWrapping;
+            return texture;
+        };
         const baseGroundTexture = new THREE.TextureLoader().load('assets/environment/base ground texture.jpg');
         baseGroundTexture.minFilter = THREE.LinearFilter;
         baseGroundTexture.wrapS = THREE.RepeatWrapping;
         baseGroundTexture.wrapT = THREE.RepeatWrapping;
-        const room2BaseTexture = new THREE.TextureLoader().load('assets/environment/Home%20lobby%20asset%20and%20texture/room%202%20base%20texture.jpg?v=20260903a');
+        const room2BaseTexture = new THREE.TextureLoader().load('assets/environment/Home%20lobby%20asset%20and%20texture/room%202%20base%20texture.jpg?v=20260904a');
         room2BaseTexture.minFilter = THREE.LinearFilter;
         room2BaseTexture.magFilter = THREE.LinearFilter;
         room2BaseTexture.wrapS = THREE.ClampToEdgeWrapping;
         room2BaseTexture.wrapT = THREE.ClampToEdgeWrapping;
+        const sofaTexture = new THREE.TextureLoader().load('assets/environment/Home%20lobby%20asset%20and%20texture/soffa.png?v=20260904a');
+        sofaTexture.minFilter = THREE.LinearFilter;
+        sofaTexture.magFilter = THREE.LinearFilter;
+        sofaTexture.wrapS = THREE.ClampToEdgeWrapping;
+        sofaTexture.wrapT = THREE.ClampToEdgeWrapping;
+        const exitDoorMatTexture = makeUiTexture('assets/environment/Home%20lobby%20asset%20and%20texture/exit%20door%20mat.png?v=20260904a');
+        const grannyDoorMatTexture = makeUiTexture('assets/environment/Home%20lobby%20asset%20and%20texture/grandma%20dppr%20mat.png?v=20260904a');
+        const plantTexture = makeUiTexture('assets/environment/Home%20lobby%20asset%20and%20texture/plant%201.png?v=20260904a');
+        const plantAltTexture = makeUiTexture('assets/environment/Home%20lobby%20asset%20and%20texture/plant%202.png?v=20260904a');
+        const shelfTexture = makeUiTexture('assets/environment/Home%20lobby%20asset%20and%20texture/shelf.png?v=20260904a');
+        const shopM1Texture = makeUiTexture('assets/environment/shop%20scene%20texture/m1.jpg?v=20260904b');
+        const shopM2Texture = makeUiTexture('assets/environment/shop%20scene%20texture/m2.jpg?v=20260904b');
+        const shopM3Texture = makeUiTexture('assets/environment/shop%20scene%20texture/m3.png?v=20260904e');
+        const circusBaseTexture = makeUiTexture('assets/environment/Circus%20scene%20textures/base%20texture%20m5.jpg?v=20260905a');
+        const circusWheelTexture = makeUiTexture('assets/environment/Circus%20scene%20textures/circus%20wheel%20m1.png?v=20260905a');
+        const circusPropsTexture = makeUiTexture('assets/environment/Circus%20scene%20textures/props%20m2.png?v=20260905a');
+        const circusTentTexture = makeUiTexture('assets/environment/Circus%20scene%20textures/tennt%20m3.png?v=20260905a');
+        const circusPopcornTexture = makeUiTexture('assets/environment/Circus%20scene%20textures/popcorn.png?v=20260905a');
 
         const layoutMaterials = {
             Ground: new THREE.MeshBasicMaterial({ color: 0x26352d, side: THREE.DoubleSide }),
@@ -502,12 +741,27 @@
             BodyProtect: new THREE.MeshBasicMaterial({ color: 0xeadfd5, side: THREE.DoubleSide }),
             BaseGround: new THREE.MeshBasicMaterial({ map: baseGroundTexture, side: THREE.DoubleSide }),
             Room2Base: new THREE.MeshBasicMaterial({ map: room2BaseTexture, side: THREE.DoubleSide }),
+            Sofa: new THREE.MeshBasicMaterial({ map: sofaTexture, transparent: true, alphaTest: 0.05, depthWrite: false, side: THREE.DoubleSide }),
+            ExitDoorMat: new THREE.MeshBasicMaterial({ map: exitDoorMatTexture, transparent: true, alphaTest: 0.05, depthWrite: false, side: THREE.DoubleSide }),
+            GrannyDoorMat: new THREE.MeshBasicMaterial({ map: grannyDoorMatTexture, transparent: true, alphaTest: 0.05, depthWrite: false, side: THREE.DoubleSide }),
+            Plant: new THREE.MeshBasicMaterial({ map: plantTexture, transparent: true, alphaTest: 0.05, depthWrite: false, side: THREE.DoubleSide }),
+            PlantAlt: new THREE.MeshBasicMaterial({ map: plantAltTexture, transparent: true, alphaTest: 0.05, depthWrite: false, side: THREE.DoubleSide }),
+            Shelf: new THREE.MeshBasicMaterial({ map: shelfTexture, transparent: true, alphaTest: 0.05, depthWrite: false, side: THREE.DoubleSide }),
             HouseBase: new THREE.MeshBasicMaterial({ color: 0x4a302d, side: THREE.DoubleSide }),
             ShopSand: new THREE.MeshBasicMaterial({ color: 0xb88f64, side: THREE.DoubleSide }),
+            ShopM1: new THREE.MeshBasicMaterial({ map: shopM1Texture, side: THREE.DoubleSide }),
+            ShopM2: new THREE.MeshBasicMaterial({ map: shopM2Texture, side: THREE.DoubleSide }),
+            ShopM3: new THREE.MeshBasicMaterial({ map: shopM3Texture, transparent: true, alphaTest: 0.05, depthWrite: false, side: THREE.DoubleSide }),
+            CircusBase: new THREE.MeshBasicMaterial({ map: circusBaseTexture, side: THREE.DoubleSide }),
+            CircusWheel: new THREE.MeshBasicMaterial({ map: circusWheelTexture, transparent: true, alphaTest: 0.05, depthWrite: false, side: THREE.DoubleSide }),
+            CircusProps: new THREE.MeshBasicMaterial({ map: circusPropsTexture, transparent: true, alphaTest: 0.05, depthWrite: false, side: THREE.DoubleSide }),
+            CircusTent: new THREE.MeshBasicMaterial({ map: circusTentTexture, transparent: true, alphaTest: 0.05, depthWrite: false, side: THREE.DoubleSide }),
+            CircusPopcorn: new THREE.MeshBasicMaterial({ map: circusPopcornTexture, transparent: true, alphaTest: 0.05, depthWrite: false, side: THREE.DoubleSide }),
             CircusGround: new THREE.MeshBasicMaterial({ color: 0x6f4a68, side: THREE.DoubleSide }),
             Default: new THREE.MeshBasicMaterial({ color: 0xb8c7bd, side: THREE.DoubleSide })
         };
         const objLayoutScale = 1;
+        const movementAreas = {};
         const basementGroup = new THREE.Group();
         basementGroup.name = 'BasementScene';
         const lobbyGroup = new THREE.Group();
@@ -527,7 +781,19 @@
         let lobbyReady = false;
         let shopReady = false;
         let circusReady = false;
-
+        const shopStarterCard = {
+            mesh: null,
+            center: new THREE.Vector3(-4.856, 0, 3.806),
+            focus: new THREE.Vector3(-4.856, 0, 3.55),
+            triggerRadius: 1.45,
+            price: 10,
+            purchased: false,
+            panelOpen: false,
+            focusing: false,
+            buying: false,
+            buyTimer: 0,
+            dismissed: false
+        };
         const ritualCircleTexture = new THREE.TextureLoader().load('assets/environment/circle ritual.png');
         ritualCircleTexture.minFilter = THREE.LinearFilter;
         ritualCircleTexture.magFilter = THREE.LinearFilter;
@@ -630,15 +896,79 @@
             }
             ritualShapeParts.sockets.push(socketData);
         });
+        const getObjBoundsByName = (objText) => {
+            const bounds = {};
+            let currentName = null;
+            objText.split(/\r?\n/).forEach((line) => {
+                const trimmed = line.trim();
+                const parts = trimmed.split(/\s+/);
+                if (parts[0] === 'o' || parts[0] === 'g') {
+                    currentName = parts.slice(1).join(' ') || 'OBJ_object';
+                    return;
+                }
+                if (parts[0] !== 'v' || !currentName) return;
+                const x = parseFloat(parts[1]) * objLayoutScale;
+                const y = parseFloat(parts[2]) * objLayoutScale;
+                const z = parseFloat(parts[3]) * objLayoutScale;
+                if (!bounds[currentName]) bounds[currentName] = { minX: x, maxX: x, minY: y, maxY: y, minZ: z, maxZ: z };
+                else {
+                    const item = bounds[currentName];
+                    item.minX = Math.min(item.minX, x);
+                    item.maxX = Math.max(item.maxX, x);
+                    item.minY = Math.min(item.minY, y);
+                    item.maxY = Math.max(item.maxY, y);
+                    item.minZ = Math.min(item.minZ, z);
+                    item.maxZ = Math.max(item.maxZ, z);
+                }
+            });
+            return bounds;
+        };
+
+        const createLobbyImageProp = (name, bounds, material, width, height, rotation = 0) => {
+            if (!bounds) return;
+            const mesh = new THREE.Mesh(new THREE.PlaneGeometry(width, height), material.clone());
+            mesh.name = name;
+            mesh.rotation.x = -Math.PI / 2;
+            mesh.rotation.z = rotation;
+            mesh.position.set((bounds.minX + bounds.maxX) / 2, 0.082, (bounds.minZ + bounds.maxZ) / 2);
+            mesh.renderOrder = 4;
+            lobbyGroup.add(mesh);
+        };
+
+        const createLobbyPropsFromMarkers = (objText) => {
+            const bounds = getObjBoundsByName(objText);
+            createLobbyImageProp('LOBBY_plant_1', bounds['plants_position_(hide)'], layoutMaterials.Plant, 0.72, 1.16, 0);
+            createLobbyImageProp('LOBBY_plant_2', bounds['plants_position_.001(hide)'], layoutMaterials.PlantAlt, 0.82, 1.04, 0);
+            createLobbyImageProp('LOBBY_plant_3', bounds['plants_position_.002hide)'], layoutMaterials.Plant, 0.72, 1.16, 0);
+            createLobbyImageProp('LOBBY_shelf', bounds['shelf_postion_(hide)'], layoutMaterials.Shelf, 1.18, 1.52, 0);
+        };
+
 
         const getLayoutMaterial = (objectData, isLine = false, sceneStyle = 'default') => {
             const name = objectData.name.toLowerCase();
             const materialName = objectData.material;
+            const materialKey = (materialName || '').toLowerCase();
 
+            if (name.includes('exit_door_mat')) return layoutMaterials.ExitDoorMat;
+            if (name.includes('granny_door_mat')) return layoutMaterials.GrannyDoorMat;
+            if (name.includes('plants_position_.001')) return layoutMaterials.PlantAlt;
+            if (name.includes('plants_position')) return layoutMaterials.Plant;
+            if (name.includes('shelf_postion')) return layoutMaterials.Shelf;
+            if (name === 'sofa') return layoutMaterials.Sofa;
             if (name.includes('room2_base')) return layoutMaterials.Room2Base;
             if (name.includes('base_ground') || name.includes('base_underground') || name.includes('basement_ritual_ground') || name.includes('basefbxasc032offbxasc032house')) return layoutMaterials.BaseGround;
+            if (sceneStyle === 'shop' && (name.includes('_m1') || materialKey.includes('lambert4'))) return layoutMaterials.ShopM1;
+            if (sceneStyle === 'shop' && (name.includes('_m2') || materialKey.includes('lambert5'))) return layoutMaterials.ShopM2;
+            if (sceneStyle === 'shop' && (name.includes('_m3') || name.includes('-m3') || materialKey.includes('lambert7'))) return layoutMaterials.ShopM3;
             if (sceneStyle === 'shop' && (name === 'base' || name === 'base2' || name.includes('shop_beach'))) return layoutMaterials.ShopSand;
-            if (sceneStyle === 'circus' && (name === 'base' || name === 'plane' || name.includes('circus'))) return layoutMaterials.CircusGround;
+            if (sceneStyle === 'circus') {
+                if (name.includes('popcorn') || materialKey === 'material.009') return layoutMaterials.CircusPopcorn;
+                if (name.includes('tent') || name.includes('m3') || materialKey === 'material') return layoutMaterials.CircusTent;
+                if (name.includes('m1') || name.includes('trolly') || materialKey === 'material.001') return layoutMaterials.CircusWheel;
+                if (name.includes('m2') || /^material\.00[2-8]$/.test(materialKey) || materialKey === 'material.010') return layoutMaterials.CircusProps;
+                if (name.includes('m5') || name.includes('base') || name.includes('walking_space') || materialKey === 'lambert3') return layoutMaterials.CircusBase;
+                return layoutMaterials.CircusGround;
+            }
             if (name.includes('ground')) return layoutMaterials.Ground;
             if (name.includes('base_circle')) return layoutMaterials.BaseCircle;
             if (name.includes('candle')) return layoutMaterials.CandleMarker;
@@ -746,7 +1076,22 @@
 
             objects.forEach((objectData) => {
                 const objectName = objectData.name.toLowerCase();
-                if (objectName.includes('body') || objectName.includes('protect') || objectName.includes('disable') || objectName.includes('dissable') || objectName.includes('candle') || objectName.includes('stone')) return;
+                if (objectName.includes('area_wher_user_can_move') || (sceneStyle === 'circus' && objectName.includes('user_walking_space'))) {
+                    const triangles = [];
+                    for (let i = 0; i < objectData.faces.length; i += 3) {
+                        triangles.push([
+                            vertices[objectData.faces[i]],
+                            vertices[objectData.faces[i + 1]],
+                            vertices[objectData.faces[i + 2]]
+                        ]);
+                    }
+                    if (sceneStyle === 'shop') {
+                        movementAreas.shop = triangles;
+                        return;
+                    }
+                    if (sceneStyle === 'circus') movementAreas.circus = triangles;
+                }
+                if (objectName.includes('body') || objectName.includes('protect') || objectName.includes('disable') || objectName.includes('dissable') || objectName.includes('hide') || objectName.includes('candle') || objectName.includes('stone')) return;
 
                 if (objectData.faces.length > 0) {
                     const positions = [];
@@ -770,6 +1115,35 @@
                     const material = getLayoutMaterial(objectData, false, sceneStyle);
                     const mesh = new THREE.Mesh(geometry, material);
                     mesh.name = objectData.name;
+                    if (sceneStyle === 'shop' && objectName.includes('soul_platform_-m3')) {
+                        geometry.computeBoundingBox();
+                        const box = geometry.boundingBox;
+                        shopStarterCard.mesh = mesh;
+                        shopStarterCard.center.set((box.min.x + box.max.x) / 2, 0, (box.min.z + box.max.z) / 2);
+                        shopStarterCard.focus.set(shopStarterCard.center.x, 0, shopStarterCard.center.z - 0.26);
+                    }
+                    if (sceneStyle === 'shop' && objectName.includes('tarot_granny')) {
+                        mesh.material = material.clone();
+                        mesh.material.side = THREE.DoubleSide;
+                        mesh.material.transparent = true;
+                        mesh.material.alphaTest = 0.02;
+                        mesh.material.depthWrite = false;
+                        mesh.position.z += 0.03;
+                    }
+
+                    if (objectName.includes('shelf_postion')) {
+                        const shelfDepthMaterial = material.clone();
+                        shelfDepthMaterial.color.setHex(0x5b4635);
+                        shelfDepthMaterial.transparent = true;
+                        shelfDepthMaterial.opacity = 0.72;
+                        shelfDepthMaterial.depthWrite = false;
+                        const shelfDepth = new THREE.Mesh(geometry.clone(), shelfDepthMaterial);
+                        shelfDepth.name = objectData.name + '_depth_shadow';
+                        shelfDepth.position.set(0.08, -0.03, -0.1);
+                        shelfDepth.renderOrder = 2;
+                        targetGroup.add(shelfDepth);
+                        mesh.renderOrder = 3;
+                    }
                     targetGroup.add(mesh);
                 }
 
@@ -879,7 +1253,7 @@
                 const nodeName = node.name || '';
                 const objectName = nodeName.toLowerCase();
 
-                if (objectName.includes('body') || objectName.includes('protect') || objectName.includes('disable') || objectName.includes('dissable') || objectName.includes('candle') || objectName.includes('stone')) return;
+                if (objectName.includes('body') || objectName.includes('protect') || objectName.includes('disable') || objectName.includes('dissable') || objectName.includes('hide') || objectName.includes('candle') || objectName.includes('stone')) return;
 
                 if (objectName.includes('ring') && node.mesh === undefined) {
                     createGeneratedRitualRing();
@@ -935,7 +1309,7 @@
             })
             .catch(() => addFallbackBaseLayout());
 
-        fetch('assets/environment/home%20lobby%20scene.obj?v=20260903b')
+        fetch('assets/environment/home%20lobby%20scene.obj?v=20260904f')
             .then((response) => {
                 if (!response.ok) throw new Error('Could not load home lobby scene.obj');
                 return response.text();
@@ -945,7 +1319,7 @@
                 lobbyReady = true;
             });
 
-        fetch('assets/environment/shop beach scene.obj')
+        fetch('assets/environment/shop%20beach%20scene.obj?v=20260905a')
             .then((response) => {
                 if (!response.ok) throw new Error('Could not load shop beach scene.obj');
                 return response.text();
@@ -955,9 +1329,9 @@
                 shopReady = true;
             });
 
-        fetch('assets/environment/circus sccene.obj')
+        fetch('assets/environment/circus%20enviornment.obj?v=20260905a')
             .then((response) => {
-                if (!response.ok) throw new Error('Could not load circus sccene.obj');
+                if (!response.ok) throw new Error('Could not load circus enviornment.obj');
                 return response.text();
             })
             .then((objText) => {
@@ -976,21 +1350,22 @@
                 nextAreaCollider: { minX: -1.939, maxX: 1.945, minZ: 10.384, maxZ: 11.646 }
             },
             lobby: {
-                bounds: { minX: -6.639, maxX: 7.892, minZ: -7.935, maxZ: 9.928 },
-                spawn: { x: 3.35, z: -5.89 },
-                mapCollider: { minX: -4.982, maxX: -1.963, minZ: 5.894, maxZ: 7.156 },
-                basementCollider: { minX: 1.821, maxX: 4.841, minZ: -8.297, maxZ: -7.034 },
-                mapReturnSpawn: { x: -3.68, z: 4.83 }
+                bounds: { minX: -4.45, maxX: 4.648, minZ: -5.513, maxZ: 4.702 },
+                spawn: { x: 2.648, z: -4.127 },
+                mapCollider: { minX: -3.986, maxX: -1.582, minZ: 3.847, maxZ: 4.702 },
+                basementCollider: { minX: 1.431, maxX: 3.836, minZ: -5.758, maxZ: -4.904 },
+                mapReturnSpawn: { x: -2.949, z: 3.127 }
             },
             shop: {
-                bounds: { minX: -17.1, maxX: 17.1, minZ: -7.7, maxZ: 15.1 },
-                spawn: { x: 3.35, z: -5.89 },
-                mapCollider: { minX: 1.821, maxX: 4.841, minZ: -8.297, maxZ: -7.034 }
+                bounds: { minX: -7.543, maxX: 13.595, minZ: -6.895, maxZ: 11.425 },
+                spawn: { x: 3.225, z: -5.167 },
+                mapCollider: { minX: 1.817, maxX: 4.6, minZ: -7.387, maxZ: -6.224 }
             },
             circus: {
-                bounds: { minX: -19.7, maxX: 17.1, minZ: -7.7, maxZ: 8.3 },
-                spawn: { x: -16.64, z: -0.18 },
-                mapCollider: { minX: -19.774, maxX: -18.426, minZ: -1.833, maxZ: 1.22 }
+                bounds: { minX: -19.675, maxX: 17.465, minZ: -7.742, maxZ: 8.691 },
+                spawn: { x: -16.639, z: -0.175 },
+                mapCollider: { minX: -19.774, maxX: -18.426, minZ: -1.833, maxZ: 1.22 },
+                tentCollider: { minX: 10.877, maxX: 12.47, minZ: -6.669, maxZ: -5.691 }
             }
         };
 
@@ -1001,6 +1376,33 @@
             point.z <= rect.maxZ
         );
 
+        const isPointInTriangleXZ = (point, triangle) => {
+            const [a, b, c] = triangle;
+            const v0x = c.x - a.x;
+            const v0z = c.z - a.z;
+            const v1x = b.x - a.x;
+            const v1z = b.z - a.z;
+            const v2x = point.x - a.x;
+            const v2z = point.z - a.z;
+            const dot00 = v0x * v0x + v0z * v0z;
+            const dot01 = v0x * v1x + v0z * v1z;
+            const dot02 = v0x * v2x + v0z * v2z;
+            const dot11 = v1x * v1x + v1z * v1z;
+            const dot12 = v1x * v2x + v1z * v2z;
+            const denom = dot00 * dot11 - dot01 * dot01;
+            if (Math.abs(denom) < 0.000001) return false;
+            const invDenom = 1 / denom;
+            const u = (dot11 * dot02 - dot01 * dot12) * invDenom;
+            const v = (dot00 * dot12 - dot01 * dot02) * invDenom;
+            return u >= -0.001 && v >= -0.001 && u + v <= 1.001;
+        };
+
+        const isPointInsideMovementArea = (point, areaName) => {
+            const triangles = movementAreas[areaName];
+            return !!triangles && triangles.some((triangle) => isPointInTriangleXZ(point, triangle));
+        };
+
+        const lastValidPlayerPosition = new THREE.Vector3();
         const clearEnemies = () => {
             enemies.forEach((enemy) => scene.remove(enemy.group));
             enemies = [];
@@ -1031,11 +1433,13 @@
             const spawn = areaConfigs[areaName].spawn;
             if (spawn) {
                 characterGroup.position.set(spawn.x, 0, spawn.z);
+                lastValidPlayerPosition.copy(characterGroup.position);
             }
         };
 
 
         const mapOverlay = document.getElementById('map-overlay');
+        const mapImage = document.getElementById('map-image');
         const mapFrame = document.getElementById('map-frame');
         const mapClose = document.getElementById('map-close');
         const fadeOverlay = document.getElementById('fade-overlay');
@@ -1046,6 +1450,7 @@
         let mapTriggerArmed = true;
         const openMapOnStart = false;
         let isTransitioning = false;
+        const mapProgress = { circusUnlocked: false, pendingCircusReveal: false };
 
         const setFade = (enabled) => {
             fadeOverlay.classList.toggle('active', enabled);
@@ -1075,10 +1480,12 @@
             setFade(true);
             setTimeout(() => {
                 isMapOpen = true;
+                setMapUnlockState();
                 mapFrame.classList.remove('departing');
                 mapOverlay.classList.add('open');
                 mapOverlay.setAttribute('aria-hidden', 'false');
                 setFade(false);
+                if (mapProgress.pendingCircusReveal) setTimeout(revealCircusOnMap, 420);
                 setTimeout(() => { isTransitioning = false; }, 520);
             }, 360);
         };
@@ -1098,6 +1505,37 @@
                 setTimeout(() => { isTransitioning = false; }, 420);
             }, 360);
         };
+        const setMapUnlockState = () => {
+            if (mapImage) {
+                mapImage.src = mapProgress.circusUnlocked
+                    ? 'assets/environment/unlock%20shop%2C%20house%20%2C%20circus%20map.jpg?v=20260905a'
+                    : 'assets/environment/unlock%20shop%20%2C%20house%20map.jpg?v=20260905a';
+            }
+            document.querySelectorAll('[data-location="circus"], [data-destination="circus"]').forEach((node) => {
+                node.classList.toggle('map-location-locked', !mapProgress.circusUnlocked);
+                if (node.tagName === 'BUTTON') node.disabled = !mapProgress.circusUnlocked;
+            });
+        };
+
+        const revealCircusOnMap = () => {
+            if (mapProgress.circusUnlocked) return;
+            mapProgress.circusUnlocked = true;
+            mapProgress.pendingCircusReveal = false;
+            setMapUnlockState();
+            document.querySelectorAll('[data-location="circus"]').forEach((node) => {
+                node.classList.remove('map-unlock-reveal');
+                void node.offsetWidth;
+                node.classList.add('map-unlock-reveal');
+            });
+            setTimeout(() => {
+                document.querySelectorAll('[data-location="circus"]').forEach((node) => node.classList.remove('map-unlock-reveal'));
+                setMapLocation(activeArea === 'shop' || activeArea === 'circus' ? activeArea : 'home');
+            }, 1160);
+            playWaveGesture('Circus Unlocked');
+        };
+
+        setMapUnlockState();
+
         const setMapLocation = (locationId) => {
             document.querySelectorAll('.map-indicator-fill').forEach((indicator) => {
                 indicator.classList.toggle('active', indicator.dataset.location === locationId);
@@ -1106,7 +1544,7 @@
         };
 
         const chooseMapLocation = (locationId) => {
-            if (isTransitioning) return;
+            if (isTransitioning || (locationId === 'circus' && !mapProgress.circusUnlocked)) return;
             isTransitioning = true;
             setMapLocation(locationId);
             const selectedIndicator = document.querySelector(`.map-indicator-fill[data-location="${locationId}"]`);
@@ -1124,6 +1562,7 @@
                     switchArea('lobby');
                     const spawn = areaConfigs.lobby.mapReturnSpawn;
                     characterGroup.position.set(spawn.x, 0, spawn.z);
+                lastValidPlayerPosition.copy(characterGroup.position);
                 } else if (locationId === 'shop' || locationId === 'circus') {
                     isMapOpen = false;
                     mapTriggerArmed = false;
@@ -1149,6 +1588,13 @@
             const bounds = config.bounds;
             characterGroup.position.x = THREE.MathUtils.clamp(characterGroup.position.x, bounds.minX, bounds.maxX);
             characterGroup.position.z = THREE.MathUtils.clamp(characterGroup.position.z, bounds.minZ, bounds.maxZ);
+            if (movementAreas[activeArea]) {
+                if (isPointInsideMovementArea(characterGroup.position, activeArea)) {
+                    lastValidPlayerPosition.copy(characterGroup.position);
+                } else {
+                    characterGroup.position.copy(lastValidPlayerPosition);
+                }
+            }
 
             if (config.ritualCenter) {
                 const ritualDeltaX = characterGroup.position.x - config.ritualCenter.x;
@@ -1183,12 +1629,59 @@
         const baseHealthDisplay = document.getElementById('base-health-display');
         const soulHealthDisplay = document.getElementById('soul-health-display');
         const soulCoinDisplay = document.getElementById('soul-coin-display');
-
+        const shopPurchasePanel = document.getElementById('shop-purchase-panel');
+        const shopPurchaseClose = document.getElementById('shop-purchase-close');
+        const shopPurchaseBuy = document.getElementById('shop-purchase-buy');
+        const shopPurchasePrice = document.getElementById('shop-purchase-price');
         const updateHealthDisplays = () => {
             baseHealthDisplay.innerText = "Base Health: " + Math.max(0, Math.floor(baseHealth));
             soulHealthDisplay.innerText = "Soul Health: " + Math.max(0, Math.floor(soulHealth));
             soulCoinDisplay.innerText = "Soul Coins: " + soulCoins;
         };
+
+        const refreshShopPurchasePanel = () => {
+            if (!shopPurchasePanel) return;
+            shopPurchasePrice.textContent = shopStarterCard.price + ' Soul Coins';
+            shopPurchaseBuy.disabled = soulCoins < shopStarterCard.price || shopStarterCard.buying;
+            shopPurchaseBuy.textContent = soulCoins < shopStarterCard.price ? 'NEED 10 SOUL COINS' : (shopStarterCard.buying ? 'BOUGHT' : 'BUY');
+        };
+
+        const openShopStarterPurchase = () => {
+            if (shopStarterCard.purchased || shopStarterCard.panelOpen || shopStarterCard.buying) return;
+            shopStarterCard.panelOpen = true;
+            shopStarterCard.focusing = true;
+            shopPurchasePanel.classList.remove('buying');
+            shopPurchasePanel.classList.add('open');
+            shopPurchasePanel.setAttribute('aria-hidden', 'false');
+            refreshShopPurchasePanel();
+        };
+
+        const closeShopStarterPurchase = (dismiss = true) => {
+            shopStarterCard.panelOpen = false;
+            shopStarterCard.focusing = false;
+            if (dismiss && !shopStarterCard.purchased) shopStarterCard.dismissed = true;
+            shopPurchasePanel.classList.remove('open', 'shake', 'buying');
+            shopPurchasePanel.setAttribute('aria-hidden', 'true');
+        };
+
+        const buyShopStarterCard = () => {
+            if (shopStarterCard.purchased || shopStarterCard.buying) return;
+            if (soulCoins < shopStarterCard.price) {
+                shopPurchasePanel.classList.remove('shake');
+                void shopPurchasePanel.offsetWidth;
+                shopPurchasePanel.classList.add('shake');
+                return;
+            }
+            soulCoins -= shopStarterCard.price;
+            shopStarterCard.buying = true;
+            shopStarterCard.buyTimer = 0;
+            shopPurchasePanel.classList.add('buying');
+            refreshShopPurchasePanel();
+            updateHealthDisplays();
+        };
+
+        shopPurchaseBuy.addEventListener('click', buyShopStarterCard);
+        shopPurchaseClose.addEventListener('click', () => closeShopStarterPurchase(true));
 
         // --- 4.3 Enemy System ---
         let enemies = [];
@@ -1734,6 +2227,9 @@
 
         // --- 6. Game Loop ---
         const clock = new THREE.Clock();
+        const nightClockIndicator = document.getElementById('night-clock-indicator');
+        let nightClockTime = 0;
+        const nightClockRadius = 29;
         const moveSpeed = 5; // units per second
         const normalCamera = { height: 18.7, backDistance: 13.2, lookAhead: 2.0 };
         const cinematicCamera = { height: 15.9, backDistance: 11.2, lookAhead: 1.4 };
@@ -1757,11 +2253,17 @@
         function animate() {
             requestAnimationFrame(animate);
             const dt = clock.getDelta();
+            if (humanFormMixer) humanFormMixer.update(dt);
             comboTimer = Math.max(0, comboTimer - dt);
             slashRecoveryTimer = Math.max(0, slashRecoveryTimer - dt);
+            nightClockTime += dt;
+            if (nightClockIndicator) {
+                const clockAngle = nightClockTime * 26;
+                nightClockIndicator.style.transform = 'translate(-50%, -50%) rotate(' + clockAngle + 'deg) translateY(-' + nightClockRadius + 'px)';
+            }
             
             // --- Player Movement ---
-            let currentSpeed = (isMapOpen || isTransitioning || isCinematicCamera || isIntroCinematic) ? 0 : (slashRecoveryTimer > 0 ? moveSpeed * 0.62 : moveSpeed);
+            let currentSpeed = (isMapOpen || isTransitioning || isCinematicCamera || isIntroCinematic || shopStarterCard.focusing || shopStarterCard.buying) ? 0 : (slashRecoveryTimer > 0 ? moveSpeed * 0.62 : moveSpeed);
             if (isDashing) {
                 dashTimer -= dt;
                 if (dashTimer <= 0) isDashing = false;
@@ -1799,6 +2301,43 @@
                 if (!isMapOpen && mapTriggerArmed && isInsideAreaMapTrigger) openMap();
             }
 
+            if (activeArea === 'shop' && !shopStarterCard.purchased && !shopStarterCard.panelOpen && !shopStarterCard.buying) {
+                const dx = characterGroup.position.x - shopStarterCard.center.x;
+                const dz = characterGroup.position.z - shopStarterCard.center.z;
+                const cardDistance = Math.sqrt(dx * dx + dz * dz);
+                if (cardDistance > shopStarterCard.triggerRadius + 0.5) shopStarterCard.dismissed = false;
+                if (!shopStarterCard.dismissed && cardDistance < shopStarterCard.triggerRadius) openShopStarterPurchase();
+            }
+
+            if (shopStarterCard.focusing) {
+                characterGroup.position.x = THREE.MathUtils.lerp(characterGroup.position.x, shopStarterCard.focus.x, 1 - Math.pow(0.002, dt));
+                characterGroup.position.z = THREE.MathUtils.lerp(characterGroup.position.z, shopStarterCard.focus.z, 1 - Math.pow(0.002, dt));
+                lastValidPlayerPosition.copy(characterGroup.position);
+                const focusDx = characterGroup.position.x - shopStarterCard.focus.x;
+                const focusDz = characterGroup.position.z - shopStarterCard.focus.z;
+                if (!shopStarterCard.buying && soulCoins < shopStarterCard.price && Math.sqrt(focusDx * focusDx + focusDz * focusDz) < 0.08) {
+                    shopStarterCard.focusing = false;
+                }
+            }
+
+            if (shopStarterCard.buying) {
+                shopStarterCard.buyTimer += dt;
+                const progress = Math.min(1, shopStarterCard.buyTimer / 0.62);
+                const ease = progress * progress * (3 - 2 * progress);
+                if (shopStarterCard.mesh) {
+                    const pulse = 1 + Math.sin(progress * Math.PI) * 0.08;
+                    shopStarterCard.mesh.scale.setScalar(pulse);
+                }
+                if (progress >= 1) {
+                    shopStarterCard.buying = false;
+                    shopStarterCard.purchased = true;
+                    mapProgress.pendingCircusReveal = !mapProgress.circusUnlocked;
+                    if (shopStarterCard.mesh) shopStarterCard.mesh.scale.setScalar(1);
+                    activateHumanForm();
+                    closeShopStarterPurchase(false);
+                }
+            }
+
             const horizontalIntent = isDashing ? lastMoveDir.turn : moveData.turn;
             if (horizontalIntent > 0.05) characterFacing = 1;
             if (horizontalIntent < -0.05) characterFacing = -1;
@@ -1823,6 +2362,23 @@
 
             character.quaternion.copy(camera.quaternion);
             character.rotateZ(soulTilt + slashTilt);
+
+            if (humanFormUnlocked) {
+                character.visible = false;
+                if (humanFormRoot) {
+                    humanFormRoot.visible = true;
+                    humanFormRoot.position.y = 0;
+                    const movingHuman = Math.abs(moveData.forward) > 0.05 || Math.abs(moveData.turn) > 0.05 || isDashing;
+                    playHumanFormAction(movingHuman ? 'Walk' : 'Idle');
+                    if (movingHuman) {
+                        const moveAngle = Math.atan2(isDashing ? lastMoveDir.turn : moveData.turn, -(isDashing ? lastMoveDir.forward : moveData.forward));
+                        humanFormRoot.rotation.y = moveAngle + Math.PI;
+                    }
+                }
+            } else if (!isIntroCinematic) {
+                character.visible = true;
+            }
+
             updateSlashVfx(dt);
             if (activeArea === 'basement') {
                 const ritualPulse = 0.9 + Math.sin(performance.now() * 0.0022) * 0.1;
