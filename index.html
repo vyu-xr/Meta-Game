@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -95,7 +95,7 @@
             font-size: 14px;
             font-family: sans-serif;
             font-weight: bold;
-            display: flex;
+            display: none;
             justify-content: center;
             align-items: center;
             z-index: 10;
@@ -105,6 +105,33 @@
         }
         #cinematic-button.active {
             background-color: rgba(255, 225, 140, 0.62);
+        }
+        #tent-trial-hud {
+            position: absolute;
+            left: 50%;
+            top: 86px;
+            transform: translateX(-50%);
+            min-width: 210px;
+            padding: 10px 14px;
+            border: 2px solid rgba(255, 236, 174, 0.82);
+            background: rgba(22, 7, 14, 0.72);
+            color: #fff2ca;
+            font: 700 15px/1.25 sans-serif;
+            text-align: center;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.7);
+            z-index: 13;
+            pointer-events: none;
+            display: none;
+        }
+        #tent-trial-hud.active {
+            display: block;
+        }
+        #tent-trial-hud .small {
+            display: block;
+            margin-top: 3px;
+            color: rgba(255, 255, 255, 0.78);
+            font-size: 12px;
+            font-weight: 600;
         }
         /* Simple HUD */
         #hud {
@@ -485,6 +512,10 @@
         </div>
     </div>
     <div id="scene-vignette" class="ritual-active"></div>
+    <div id="tent-trial-hud" aria-hidden="true">
+        <span id="tent-trial-title">Circus Trial</span>
+        <span id="tent-trial-status" class="small">Collect 5 charms</span>
+    </div>
     <div id="wave-gesture" aria-hidden="true"><div id="wave-gesture-label"></div></div>
     <div id="fade-overlay" class="active"></div>
     <div id="shop-purchase-panel" aria-hidden="true">
@@ -704,6 +735,42 @@
             texture.wrapT = THREE.ClampToEdgeWrapping;
             return texture;
         };
+        const tentArrowTexture = makeUiTexture('assets/environment/Circus%20scene%20textures/arrow%20-arcade.png?v=20260907a');
+        const makeTentCollectibleTexture = (index) => {
+            const size = 128;
+            const c = document.createElement('canvas');
+            c.width = size;
+            c.height = size;
+            const ctx = c.getContext('2d');
+            ctx.clearRect(0, 0, size, size);
+            const glow = ctx.createRadialGradient(64, 64, 6, 64, 64, 58);
+            glow.addColorStop(0, 'rgba(255,255,255,0.98)');
+            glow.addColorStop(0.32, 'rgba(130,230,255,0.9)');
+            glow.addColorStop(1, 'rgba(64,120,255,0)');
+            ctx.fillStyle = glow;
+            ctx.beginPath();
+            ctx.arc(64, 64, 58, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.save();
+            ctx.translate(64, 64);
+            ctx.rotate(Math.PI / 4);
+            ctx.fillStyle = ['#9cf7ff', '#ffd36b', '#cf9cff', '#a9ff91'][index % 4];
+            ctx.strokeStyle = 'rgba(255,255,255,0.9)';
+            ctx.lineWidth = 5;
+            ctx.beginPath();
+            ctx.moveTo(0, -34);
+            ctx.lineTo(30, 0);
+            ctx.lineTo(0, 34);
+            ctx.lineTo(-30, 0);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+            ctx.restore();
+            const texture = new THREE.CanvasTexture(c);
+            texture.minFilter = THREE.LinearFilter;
+            texture.magFilter = THREE.LinearFilter;
+            return texture;
+        };
         const baseGroundTexture = new THREE.TextureLoader().load('assets/environment/base ground texture.jpg');
         baseGroundTexture.minFilter = THREE.LinearFilter;
         baseGroundTexture.wrapS = THREE.RepeatWrapping;
@@ -801,6 +868,29 @@
             buyTimer: 0,
             dismissed: false
         };
+        const tentTrial = {
+            state: 'idle',
+            completed: false,
+            introTimer: 0,
+            activeCollectible: 0,
+            hits: 0,
+            nextObstacleTimer: 0,
+            nextCollectibleTimer: 0,
+            lastCollectibleSpot: -1,
+            warningTime: 0.72,
+            owner: null,
+            collectibles: [],
+            obstacles: [],
+            arrows: [],
+            obstaclePrototype: null,
+            messageTimer: 0,
+            hitCooldown: 0,
+            message: 'Collect the circus charms'
+        };
+        let tentJumpTimer = 0;
+        let tentJumpCooldown = 0;
+        const tentJumpDuration = 0.46;
+        const getTentCollectibleRevealDelay = () => THREE.MathUtils.randFloat(7.0, 11.0);
         const ritualCircleTexture = new THREE.TextureLoader().load('assets/environment/circle ritual.png');
         ritualCircleTexture.minFilter = THREE.LinearFilter;
         ritualCircleTexture.magFilter = THREE.LinearFilter;
@@ -1087,7 +1177,7 @@
 
             objects.forEach((objectData) => {
                 const objectName = objectData.name.toLowerCase();
-                if (objectName.includes('area_wher_user_can_move') || (sceneStyle === 'circus' && objectName.includes('user_walking_space'))) {
+                if (objectName.includes('area_wher_user_can_move') || (sceneStyle === 'circus' && objectName.includes('user_walking_space')) || (sceneStyle === 'circusTent' && objectName.includes('base_platform_where_user_move'))) {
                     const triangles = [];
                     for (let i = 0; i < objectData.faces.length; i += 3) {
                         triangles.push([
@@ -1101,8 +1191,22 @@
                         return;
                     }
                     if (sceneStyle === 'circus') movementAreas.circus = triangles;
+                    if (sceneStyle === 'circusTent') movementAreas.circusTent = triangles;
                 }
-                if (objectName.includes('body') || objectName.includes('protect') || objectName.includes('disable') || objectName.includes('dissable') || objectName.includes('hide') || objectName.includes('candle') || objectName.includes('stone')) return;
+                if (sceneStyle === 'circusTent' && objectName.includes('arcade_game_obstacle') && objectData.faces.length > 0) {
+                    const positions = [];
+                    objectData.faces.forEach((index) => {
+                        const vertex = vertices[index];
+                        positions.push(vertex.x, vertex.y, vertex.z);
+                    });
+                    const geometry = new THREE.BufferGeometry();
+                    geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+                    geometry.computeVertexNormals();
+                    tentTrial.obstaclePrototype = { geometry };
+                    return;
+                }
+
+                if (objectName.includes('body') || objectName.includes('protect') || objectName.includes('disable') || objectName.includes('dissable') || objectName.includes('hide') || objectName.includes('collider') || objectName.includes('candle') || objectName.includes('stone')) return;
 
                 if (objectData.faces.length > 0) {
                     const positions = [];
@@ -1126,6 +1230,10 @@
                     const material = getLayoutMaterial(objectData, false, sceneStyle);
                     const mesh = new THREE.Mesh(geometry, material);
                     mesh.name = objectData.name;
+                    if (sceneStyle === 'circusTent' && objectName.includes('staff_stahd')) {
+                        tentTrial.owner = mesh;
+                        mesh.userData.trialHome = mesh.position.clone();
+                    }
                     if (sceneStyle === 'shop' && objectName.includes('soul_platform_-m3')) {
                         geometry.computeBoundingBox();
                         const box = geometry.boundingBox;
@@ -1264,7 +1372,7 @@
                 const nodeName = node.name || '';
                 const objectName = nodeName.toLowerCase();
 
-                if (objectName.includes('body') || objectName.includes('protect') || objectName.includes('disable') || objectName.includes('dissable') || objectName.includes('hide') || objectName.includes('candle') || objectName.includes('stone')) return;
+                if (objectName.includes('body') || objectName.includes('protect') || objectName.includes('disable') || objectName.includes('dissable') || objectName.includes('hide') || objectName.includes('collider') || objectName.includes('candle') || objectName.includes('stone')) return;
 
                 if (objectName.includes('ring') && node.mesh === undefined) {
                     createGeneratedRitualRing();
@@ -1350,7 +1458,7 @@
                 addObjLayoutToScene(objText, circusGroup, 'circus');
                 circusReady = true;
             });
-        fetch('assets/environment/inside%20circus%20tent%20scene.obj?v=20260905a')
+        fetch('assets/environment/inside%20circus%20tent%20scene.obj?v=20260907d')
             .then((response) => {
                 if (!response.ok) throw new Error('Could not load inside circus tent scene.obj');
                 return response.text();
@@ -1390,9 +1498,9 @@
                 tentReturnSpawn: { x: 11.67, z: -5.25 }
             },
             circusTent: {
-                bounds: { minX: -6.45, maxX: 6.45, minZ: -6.45, maxZ: 6.45 },
-                spawn: { x: 0, z: 4.95 },
-                exitCollider: { minX: -1.65, maxX: 1.65, minZ: 5.78, maxZ: 6.55 }
+                bounds: { minX: -6.652, maxX: 6.652, minZ: -6.652, maxZ: 6.652 },
+                spawn: { x: 0, z: 5.72 },
+                exitCollider: { minX: -1.0, maxX: 1.0, minZ: 6.12, maxZ: 6.637 }
             }
         };
 
@@ -1454,10 +1562,15 @@
             baseHealthDisplay.style.display = areaName === 'basement' ? 'block' : 'none';
             scene.background = createBackgroundTexture(areaName);
             sceneVignette.classList.toggle('ritual-active', areaName === 'basement');
+            dashBtn.style.display = areaName === 'circusTent' ? 'none' : 'flex';
+            slashBtn.textContent = areaName === 'circusTent' ? 'JUMP' : 'SLASH';
+            slashBtn.style.display = 'flex';
 
             if (areaName !== 'basement') {
                 clearEnemies();
             }
+            if (areaName === 'circusTent') beginTentTrial();
+            else { clearTentTrialRuntime(); tentTrial.state = 'idle'; updateTentTrialHud(); }
 
             const spawn = areaConfigs[areaName].spawn;
             if (spawn) {
@@ -1467,6 +1580,310 @@
         };
 
 
+        const tentTrialHud = document.getElementById('tent-trial-hud');
+        const tentTrialTitle = document.getElementById('tent-trial-title');
+        const tentTrialStatus = document.getElementById('tent-trial-status');
+        const tentCollectiblePositions = [
+            new THREE.Vector3(-2.85, 0.5, -2.75),
+            new THREE.Vector3(2.85, 0.5, -2.55),
+            new THREE.Vector3(-2.75, 0.5, 2.35),
+            new THREE.Vector3(2.75, 0.5, 2.45),
+            new THREE.Vector3(0.05, 0.5, -2.7),
+            new THREE.Vector3(0.05, 0.5, 2.35),
+            new THREE.Vector3(-2.4, 0.5, -0.25),
+            new THREE.Vector3(2.4, 0.5, 0.2)
+        ];
+        const tentTrialStages = [
+            { dirs: ['front'], speed: 3.25, delay: 1.7 },
+            { dirs: ['front', 'left'], speed: 3.75, delay: 1.4 },
+            { dirs: ['front', 'left', 'right', 'back'], speed: 4.0, delay: 1.2 },
+            { dirs: ['front', 'left', 'right', 'back'], speed: 4.0, delay: 1.2 },
+            { dirs: ['front', 'left', 'right', 'back'], speed: 4.0, delay: 1.2, burstChance: 0.28 }
+        ];
+        const tentDirections = {
+            front: { x: 0, z: 1, start: { x: 0, z: -7.0 }, arrow: { x: 0, z: -5.75, r: Math.PI } },
+            back: { x: 0, z: -1, start: { x: 0, z: 7.0 }, arrow: { x: 0, z: 5.75, r: 0 } },
+            left: { x: 1, z: 0, start: { x: -7.0, z: 0 }, arrow: { x: -5.75, z: 0, r: -Math.PI / 2 } },
+            right: { x: -1, z: 0, start: { x: 7.0, z: 0 }, arrow: { x: 5.75, z: 0, r: Math.PI / 2 } }
+        };
+
+        const updateTentTrialHud = () => {
+            const show = activeArea === 'circusTent' && tentTrial.state !== 'idle';
+            tentTrialHud.classList.toggle('active', show);
+            tentTrialHud.setAttribute('aria-hidden', show ? 'false' : 'true');
+            if (!show) return;
+            tentTrialTitle.textContent = tentTrial.state === 'complete' ? 'Circus Trial Clear' : (tentTrial.state === 'failed' ? 'Trial Failed' : 'Circus Trial');
+            tentTrialStatus.textContent = tentTrial.message + '  ' + Math.min(5, tentTrial.activeCollectible) + '/5';
+        };
+
+        const clearTentTrialRuntime = () => {
+            tentTrial.obstacles.forEach((obstacle) => circusTentGroup.remove(obstacle.mesh));
+            tentTrial.arrows.forEach((arrow) => circusTentGroup.remove(arrow.mesh));
+            tentTrial.obstacles = [];
+            tentTrial.arrows = [];
+        };
+
+        const ensureTentTrialAssets = () => {
+            while (tentTrial.collectibles.length < 5) {
+                const index = tentTrial.collectibles.length;
+                const mesh = new THREE.Mesh(
+                    new THREE.PlaneGeometry(0.78, 0.78),
+                    new THREE.MeshBasicMaterial({ map: makeTentCollectibleTexture(index), transparent: true, alphaTest: 0.05, depthWrite: false, side: THREE.DoubleSide })
+                );
+                mesh.name = 'TentTrialCollectible_' + (index + 1);
+                mesh.visible = false;
+                mesh.renderOrder = 7;
+                circusTentGroup.add(mesh);
+                tentTrial.collectibles.push(mesh);
+            }
+        };
+
+        const chooseTentCollectibleSpot = () => {
+            const minPlayerDistance = 2.25;
+            const candidates = tentCollectiblePositions
+                .map((position, index) => ({ position, index }))
+                .filter((candidate) => {
+                    if (candidate.index === tentTrial.lastCollectibleSpot) return false;
+                    const dx = characterGroup.position.x - candidate.position.x;
+                    const dz = characterGroup.position.z - candidate.position.z;
+                    return Math.sqrt(dx * dx + dz * dz) >= minPlayerDistance;
+                });
+            const pool = candidates.length > 0 ? candidates : tentCollectiblePositions.map((position, index) => ({ position, index }));
+            const choice = pool[Math.floor(Math.random() * pool.length)];
+            tentTrial.lastCollectibleSpot = choice.index;
+            return choice.position;
+        };
+
+        const showTentCollectible = (index) => {
+            const position = chooseTentCollectibleSpot();
+            tentTrial.collectibles.forEach((mesh, meshIndex) => {
+                mesh.visible = meshIndex === index;
+                if (meshIndex === index) mesh.position.copy(position);
+            });
+        };
+
+        const beginTentTrial = () => {
+            ensureTentTrialAssets();
+            clearTentTrialRuntime();
+            tentTrial.state = tentTrial.completed ? 'complete' : 'intro';
+            tentTrial.introTimer = 1.35;
+            tentTrial.activeCollectible = 0;
+            tentTrial.hits = 0;
+            tentTrial.nextObstacleTimer = 0.35;
+            tentTrial.nextCollectibleTimer = 0;
+            tentTrial.lastCollectibleSpot = -1;
+            tentTrial.hitCooldown = 0;
+            tentTrial.message = tentTrial.completed ? 'Exit is open' : 'Watch the arrows';
+            if (tentTrial.owner) {
+                tentTrial.owner.visible = !tentTrial.completed;
+                const ownerHome = tentTrial.owner.userData.trialHome || new THREE.Vector3(0, 0, 0.35);
+                tentTrial.owner.position.copy(ownerHome);
+                tentTrial.owner.userData.trialIntroStart = ownerHome.clone();
+            }
+            if (tentTrial.completed) {
+                tentTrial.collectibles.forEach((mesh) => { mesh.visible = false; });
+            } else {
+                tentTrial.collectibles.forEach((mesh) => { mesh.visible = false; });
+            }
+            updateTentTrialHud();
+        };
+
+        const spawnTentArrow = (directionName) => {
+            const dir = tentDirections[directionName];
+            const mesh = new THREE.Mesh(
+                new THREE.PlaneGeometry(0.9, 0.9),
+                new THREE.MeshBasicMaterial({ map: tentArrowTexture, transparent: true, alphaTest: 0.05, depthWrite: false, side: THREE.DoubleSide, opacity: 0.92 })
+            );
+            mesh.name = 'TentTrialArrow_' + directionName;
+            mesh.rotation.x = -Math.PI / 2;
+            mesh.rotation.z = dir.arrow.r;
+            mesh.position.set(dir.arrow.x, 0.055, dir.arrow.z);
+            mesh.renderOrder = 8;
+            circusTentGroup.add(mesh);
+            tentTrial.arrows.push({ mesh, life: tentTrial.warningTime, maxLife: tentTrial.warningTime });
+        };
+
+        const spawnTentObstacle = (directionName, speedBoost = 0) => {
+            const dir = tentDirections[directionName];
+            const stage = tentTrialStages[Math.min(tentTrial.activeCollectible, tentTrialStages.length - 1)];
+            let geometry;
+            if (tentTrial.obstaclePrototype) {
+                geometry = tentTrial.obstaclePrototype.geometry.clone();
+                geometry.computeBoundingBox();
+                const box = geometry.boundingBox;
+                const centerX = (box.min.x + box.max.x) * 0.5;
+                const centerY = (box.min.y + box.max.y) * 0.5;
+                const centerZ = (box.min.z + box.max.z) * 0.5;
+                geometry.translate(-centerX, -centerY, -centerZ);
+            } else if (dir.x !== 0) {
+                geometry = new THREE.BoxGeometry(0.34, 0.28, 11.4);
+            } else {
+                geometry = new THREE.BoxGeometry(11.4, 0.28, 0.34);
+            }
+            const material = new THREE.MeshBasicMaterial({ color: 0xf04d32, transparent: true, opacity: 0.96, side: THREE.DoubleSide });
+            const mesh = new THREE.Mesh(geometry, material);
+            mesh.name = 'TentTrialObstacle_' + directionName;
+            mesh.position.set(dir.start.x, 0.24, dir.start.z);
+            if (tentTrial.obstaclePrototype) mesh.rotation.y = dir.x !== 0 ? Math.PI / 2 : 0;
+            circusTentGroup.add(mesh);
+            tentTrial.obstacles.push({ mesh, directionName, dir, speed: stage.speed + speedBoost, hit: false, waitTimer: tentTrial.warningTime });
+        };
+
+        const queueTentObstacle = () => {
+            const stage = tentTrialStages[Math.min(tentTrial.activeCollectible, tentTrialStages.length - 1)];
+            const directionName = stage.dirs[Math.floor(Math.random() * stage.dirs.length)];
+            spawnTentArrow(directionName);
+            spawnTentObstacle(directionName);
+            if (stage.burstChance && Math.random() < stage.burstChance) {
+                const second = stage.dirs[Math.floor(Math.random() * stage.dirs.length)];
+                if (second !== directionName) spawnTentObstacle(second, 0.22);
+            }
+            tentTrial.nextObstacleTimer = stage.delay + THREE.MathUtils.randFloat(0.05, 0.38);
+        };
+
+        const hitTentTrialPlayer = (obstacle) => {
+            if (tentTrial.state !== 'play') return;
+            obstacle.hit = true;
+            tentTrial.state = 'failed';
+            tentTrial.message = 'Hit by the bar';
+            tentTrial.nextObstacleTimer = 1.15;
+            tentTrial.collectibles.forEach((mesh) => { mesh.visible = false; });
+            clearTentTrialRuntime();
+            triggerScreenShake(0.34, 0.22);
+            playWaveGesture('Trial Failed');
+            updateTentTrialHud();
+        };
+
+        const updateTentTrial = (dt) => {
+            if (activeArea !== 'circusTent') return;
+            ensureTentTrialAssets();
+            tentJumpCooldown = Math.max(0, tentJumpCooldown - dt);
+            tentTrial.hitCooldown = Math.max(0, tentTrial.hitCooldown - dt);
+            tentJumpTimer = Math.max(0, tentJumpTimer - dt);
+            const jumpProgress = tentJumpTimer > 0 ? 1 - tentJumpTimer / tentJumpDuration : 1;
+            const jumpHeight = tentJumpTimer > 0 ? Math.sin(jumpProgress * Math.PI) * 1.08 : 0;
+
+            if (tentTrial.state === 'intro') {
+                tentTrial.introTimer = Math.max(0, tentTrial.introTimer - dt);
+                tentTrial.message = 'The ringmaster steps aside';
+                if (tentTrial.owner) {
+                    const progress = 1 - tentTrial.introTimer / 1.35;
+                    const ownerStart = tentTrial.owner.userData.trialIntroStart || tentTrial.owner.position;
+                    tentTrial.owner.position.x = ownerStart.x + 9.0 * progress;
+                    tentTrial.owner.position.z = ownerStart.z;
+                    tentTrial.owner.scale.setScalar(1);
+                    if (progress >= 1) tentTrial.owner.visible = false;
+                }
+                if (tentTrial.introTimer <= 0) {
+                    tentTrial.state = 'play';
+                    tentTrial.message = 'Survive until the charm appears';
+                    tentTrial.nextCollectibleTimer = getTentCollectibleRevealDelay();
+                    tentTrial.nextObstacleTimer = tentTrialStages[0].delay;
+                }
+                updateTentTrialHud();
+                return;
+            }
+
+            tentTrial.arrows.forEach((arrow) => {
+                arrow.life -= dt;
+                const p = Math.max(0, arrow.life / arrow.maxLife);
+                arrow.mesh.material.opacity = 0.25 + Math.sin(p * Math.PI * 6) * 0.18 + p * 0.55;
+                arrow.mesh.scale.setScalar(1 + (1 - p) * 0.22);
+            });
+            for (let i = tentTrial.arrows.length - 1; i >= 0; i--) {
+                if (tentTrial.arrows[i].life <= 0) {
+                    circusTentGroup.remove(tentTrial.arrows[i].mesh);
+                    tentTrial.arrows.splice(i, 1);
+                }
+            }
+
+            tentTrial.collectibles.forEach((mesh, index) => {
+                if (!mesh.visible) return;
+                mesh.quaternion.copy(camera.quaternion);
+                mesh.position.y = 0.55 + Math.sin(performance.now() * 0.004 + index) * 0.08;
+                mesh.scale.setScalar(1 + Math.sin(performance.now() * 0.006 + index) * 0.08);
+            });
+
+            if (tentTrial.state === 'failed') {
+                tentTrial.nextObstacleTimer = Math.max(0, tentTrial.nextObstacleTimer - dt);
+                if (tentTrial.nextObstacleTimer <= 0) {
+                    tentTrial.completed = false;
+                    beginTentTrial();
+                }
+                updateTentTrialHud();
+
+                return;
+            }
+
+            if (tentTrial.state !== 'play') {
+                updateTentTrialHud();
+                return;
+            }
+
+            if (tentTrial.nextCollectibleTimer > 0) {
+                tentTrial.nextCollectibleTimer = Math.max(0, tentTrial.nextCollectibleTimer - dt);
+                if (tentTrial.nextCollectibleTimer <= 0) {
+                    showTentCollectible(tentTrial.activeCollectible);
+                    tentTrial.message = 'Find the next circus charm';
+                }
+            }
+
+            const activeCollectible = tentTrial.collectibles[tentTrial.activeCollectible];
+            if (activeCollectible && activeCollectible.visible) {
+                const dx = characterGroup.position.x - activeCollectible.position.x;
+                const dz = characterGroup.position.z - activeCollectible.position.z;
+                if (Math.sqrt(dx * dx + dz * dz) < 0.82) {
+                    activeCollectible.visible = false;
+                    tentTrial.activeCollectible++;
+                    triggerScreenShake(0.14, 0.1);
+                    if (tentTrial.activeCollectible >= 5) {
+                        tentTrial.completed = true;
+                        tentTrial.state = 'complete';
+                        tentTrial.message = 'Trial complete';
+                        clearTentTrialRuntime();
+                        playWaveGesture('Circus Trial Clear');
+                    } else {
+                        tentTrial.nextCollectibleTimer = getTentCollectibleRevealDelay();
+                        tentTrial.message = 'Charm ' + tentTrial.activeCollectible + ' collected';
+                        const nextStage = tentTrialStages[Math.min(tentTrial.activeCollectible, tentTrialStages.length - 1)];
+                        tentTrial.nextObstacleTimer = nextStage.delay;
+                    }
+                }
+            }
+
+            tentTrial.nextObstacleTimer -= dt;
+            if (tentTrial.nextObstacleTimer <= 0) queueTentObstacle();
+
+            for (let i = tentTrial.obstacles.length - 1; i >= 0; i--) {
+                const obstacle = tentTrial.obstacles[i];
+                obstacle.waitTimer = Math.max(0, (obstacle.waitTimer || 0) - dt);
+                const isWaiting = obstacle.waitTimer > 0;
+                obstacle.mesh.material.opacity = isWaiting ? 0.48 : 0.96;
+                if (!isWaiting) {
+                    obstacle.mesh.position.x += obstacle.dir.x * obstacle.speed * dt;
+                    obstacle.mesh.position.z += obstacle.dir.z * obstacle.speed * dt;
+                }
+                const gone = Math.abs(obstacle.mesh.position.x) > 8.2 || Math.abs(obstacle.mesh.position.z) > 8.2;
+                const halfX = obstacle.dir.x !== 0 ? 0.42 : 5.7;
+                const halfZ = obstacle.dir.z !== 0 ? 0.42 : 5.7;
+                const nearX = Math.abs(characterGroup.position.x - obstacle.mesh.position.x) < halfX;
+                const nearZ = Math.abs(characterGroup.position.z - obstacle.mesh.position.z) < halfZ;
+                if (!isWaiting && !obstacle.hit && jumpHeight < 0.42 && nearX && nearZ) hitTentTrialPlayer(obstacle);
+                if (gone || obstacle.hit) {
+                    circusTentGroup.remove(obstacle.mesh);
+                    obstacle.mesh.geometry.dispose();
+                    obstacle.mesh.material.dispose();
+                    tentTrial.obstacles.splice(i, 1);
+                }
+            }
+            updateTentTrialHud();
+        };
+
+        const getTentJumpHeight = () => {
+            if (activeArea !== 'circusTent' || tentJumpTimer <= 0) return 0;
+            const progress = 1 - tentJumpTimer / tentJumpDuration;
+            return Math.sin(progress * Math.PI) * 0.92;
+        };
         const mapOverlay = document.getElementById('map-overlay');
         const mapImage = document.getElementById('map-image');
         const mapFrame = document.getElementById('map-frame');
@@ -2127,8 +2544,19 @@
             }
         };
 
+        const triggerTentJump = () => {
+            if (activeArea !== 'circusTent' || tentTrial.state !== 'play') return false;
+            if (tentJumpCooldown <= 0 && tentJumpTimer <= 0) {
+                tentJumpTimer = tentJumpDuration;
+                tentJumpCooldown = 0.47;
+                if (humanFormActions.Jump) playHumanFormAction('Jump');
+            }
+            return true;
+        };
+
         const triggerDash = (e) => {
             e.preventDefault();
+            if (triggerTentJump()) return;
             if (!isDashing) {
                 isDashing = true; dashTimer = 0.2; updateLastMoveDir();
             }
@@ -2219,6 +2647,7 @@
         };
         const triggerSlash = (e) => {
             e.preventDefault();
+            if (triggerTentJump()) return;
             if (slashRecoveryTimer > 0) return;
             updateLastMoveDir();
             const slashDir = getSlashWorldDirection();
@@ -2353,6 +2782,8 @@
                 if (!shopStarterCard.dismissed && cardDistance < shopStarterCard.triggerRadius) openShopStarterPurchase();
             }
 
+            updateTentTrial(dt);
+
             if (shopStarterCard.focusing) {
                 characterGroup.position.x = THREE.MathUtils.lerp(characterGroup.position.x, shopStarterCard.focus.x, 1 - Math.pow(0.002, dt));
                 characterGroup.position.z = THREE.MathUtils.lerp(characterGroup.position.z, shopStarterCard.focus.z, 1 - Math.pow(0.002, dt));
@@ -2398,7 +2829,7 @@
 
             character.position.set(
                 0,
-                1 + wobble * (isMoving ? 0.012 : 0.007) + slashPoseStrength * 0.025,
+                1 + wobble * (isMoving ? 0.012 : 0.007) + slashPoseStrength * 0.025 + getTentJumpHeight(),
                 0
             );
             character.scale.x = characterFacing * (1 + slashPoseStrength * 0.025);
@@ -2411,7 +2842,7 @@
                 character.visible = false;
                 if (humanFormRoot) {
                     humanFormRoot.visible = true;
-                    humanFormRoot.position.y = 0;
+                    humanFormRoot.position.y = getTentJumpHeight();
                     const movingHuman = Math.abs(moveData.forward) > 0.05 || Math.abs(moveData.turn) > 0.05 || isDashing;
                     playHumanFormAction(movingHuman ? 'Walk' : 'Idle');
                     if (movingHuman) {
@@ -2770,62 +3201,4 @@
     </script>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 

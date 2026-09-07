@@ -175,3 +175,24 @@
 - Converted the inside circus tent FBX into a local OBJ/MTL, added a Circus Tent interior scene, and wired the outside tent collider to fade into the interior with an exit back to Circus.
 - Fixed the Circus Tent interior area config and transition spawn override so exiting the tent returns the player beside the outside tent entrance.
 - Fixed Circus outside scene loading after moving the circus environment OBJ/MTL into the Circus scene textures folder; restored the circusGroup fetch before the tent-interior fetch.
+- Refreshed the inside circus tent scene from the updated FBX, bumped its OBJ cache, and wired the new base_platform_where_user_move and back_to_circus_collider markers into movement/exit logic.
+- Reconverted the updated inside circus tent FBX, bumped the tent OBJ cache to 20260907b, and aligned the tent entry spawn to the new entry_poing_ marker.
+- Fixed the Circus Tent entry spawn so the player appears inside the walkable platform instead of on the outside entry marker, preventing a stuck start state.
+- Added the first Circus Tent obstacle trial: owner intro, directional arrow warnings, sweeping bar obstacles, four sequential collectible planes, jump handling, and completion feedback.
+- Tuned the Circus Tent jump cooldown from 0.62s to 0.5s for a more responsive dodge rhythm.
+- Extended the Circus Tent trial from 4 to 5 collectibles while keeping the existing obstacle speed and intensity tuning.
+- Tuned the Circus Tent trial jump to 0.46s duration, 0.47s cooldown, slightly higher jump height, and a slower first obstacle phase for readability.
+- Retuned Circus Tent obstacle stage delays/speeds and changed obstacle warnings so bars appear during the arrow telegraph before moving.
+- Retuned Circus Tent obstacle stages, made post-collect obstacle timing respect the next stage delay, and added tent hit cooldown so collision does not stall the trial.
+- Pulled Circus Tent collectibles away from arena edges, softened late-stage obstacle speed/delay, and removed collision knockback so hits do not lock the player against colliders.
+- Changed Circus Tent obstacle contact from health damage to an immediate trial fail with a short automatic retry.
+- Hid the TALK button and moved Circus Tent jump input onto the slash button position while hiding dash during the arcade trial.
+- Changed Circus Tent collectibles to spawn at random safe inner arena spots and added a short delay before the next collectible appears.
+- Increased Circus Tent collectible reveal delay to 2.0s and made random collectible placement avoid spawning too close to the player.
+- Adjusted Circus Tent post-collect obstacle timing so it waits only for the collectible reveal delay, without adding the next stage delay.
+- Changed Circus Tent post-collect flow so the next charm appears after a random 3-5s delay while obstacles continue spawning at the next stage pace.
+- Tuned the Circus Tent collectible reveal delay to a random 7-10s window and bumped the tent scene cache for the refreshed layout.
+- Refreshed the inside circus tent scene from the latest FBX and preserved the disabled arcade bar mesh as the obstacle prototype for the tent trial.
+- Tuned Circus Tent collectible reveal delay to a random 8-12s window and made the first charm wait before appearing after the intro.
+- Replaced the generated Circus Tent owner placeholder with the exported staff_stahd mesh for the intro move-and-hide sequence.
+- Adjusted the Circus Tent staff_stahd intro so it slides 5 units to the right without z drift or scale change before hiding.
