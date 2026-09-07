@@ -196,3 +196,13 @@
 - Tuned Circus Tent collectible reveal delay to a random 8-12s window and made the first charm wait before appearing after the intro.
 - Replaced the generated Circus Tent owner placeholder with the exported staff_stahd mesh for the intro move-and-hide sequence.
 - Adjusted the Circus Tent staff_stahd intro so it slides 5 units to the right without z drift or scale change before hiding.
+
+- Refreshed the circus tent FBX export from the updated circus tent folder, remapped its interior textures, and kept the staff_stahd intro slide as the trial opener.
+
+- Inspected the updated circus tent FBX mesh export; it currently contains the obstacle-only _m2 mesh, so the playable tent scene export was kept intact while material mapping now recognizes _m2/Material.001.
+- Tightened circus tent texture assignment so `_m1` entry/base meshes use the m1 interior texture while `_m2` arcade obstacle meshes use the m2 texture.
+- Updated the circus tent OBJ loader so arcade obstacle meshes keep their m2 texture material during runtime spawning and entry meshes get generated planar UVs when needed.
+- Added randomized circus obstacle tint colors using red, yellow, and cyan while keeping the same obstacle behavior.
+- Changed circus arcade obstacles to use flat randomized colors without applying the obstacle texture during runtime.
+- Set circus arcade obstacles back to a single red color for clearer danger readability.
+- Hid the slash button in the circus tent and moved the jump action onto the dash button while the arcade trial is active.

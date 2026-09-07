@@ -798,6 +798,8 @@
         const circusPropsTexture = makeUiTexture('assets/environment/Circus%20scene%20textures/props%20m2.png?v=20260905a');
         const circusTentTexture = makeUiTexture('assets/environment/Circus%20scene%20textures/tennt%20m3.png?v=20260905a');
         const circusPopcornTexture = makeUiTexture('assets/environment/Circus%20scene%20textures/popcorn.png?v=20260905a');
+        const circusTentInteriorTexture = makeUiTexture('assets/environment/Circus%20scene%20textures/circus%20tent/inside%20circus%20tent%20m1.jpg?v=20260907a');
+        const circusTentInteriorPropTexture = makeUiTexture('assets/environment/Circus%20scene%20textures/circus%20tent/inside%20circus%20tent%20m2.jpg?v=20260907a');
 
         const layoutMaterials = {
             Ground: new THREE.MeshBasicMaterial({ color: 0x26352d, side: THREE.DoubleSide }),
@@ -824,8 +826,8 @@
             CircusProps: new THREE.MeshBasicMaterial({ map: circusPropsTexture, transparent: true, alphaTest: 0.05, depthWrite: false, side: THREE.DoubleSide }),
             CircusTent: new THREE.MeshBasicMaterial({ map: circusTentTexture, transparent: true, alphaTest: 0.05, depthWrite: false, side: THREE.DoubleSide }),
             CircusPopcorn: new THREE.MeshBasicMaterial({ map: circusPopcornTexture, transparent: true, alphaTest: 0.05, depthWrite: false, side: THREE.DoubleSide }),
-            CircusTentInteriorFloor: new THREE.MeshBasicMaterial({ color: 0x4b2235, side: THREE.DoubleSide }),
-            CircusTentInteriorProp: new THREE.MeshBasicMaterial({ color: 0xd6b36f, side: THREE.DoubleSide }),
+            CircusTentInteriorFloor: new THREE.MeshBasicMaterial({ map: circusTentInteriorTexture, side: THREE.DoubleSide }),
+            CircusTentInteriorProp: new THREE.MeshBasicMaterial({ map: circusTentInteriorPropTexture, transparent: true, alphaTest: 0.05, side: THREE.DoubleSide }),
             CircusGround: new THREE.MeshBasicMaterial({ color: 0x6f4a68, side: THREE.DoubleSide }),
             Default: new THREE.MeshBasicMaterial({ color: 0xb8c7bd, side: THREE.DoubleSide })
         };
@@ -1059,7 +1061,8 @@
             if (sceneStyle === 'shop' && (name.includes('_m3') || name.includes('-m3') || materialKey.includes('lambert7'))) return layoutMaterials.ShopM3;
             if (sceneStyle === 'shop' && (name === 'base' || name === 'base2' || name.includes('shop_beach'))) return layoutMaterials.ShopSand;
             if (sceneStyle === 'circusTent') {
-                if (name.includes('staff')) return layoutMaterials.CircusTentInteriorProp;
+                if (name.includes('_m1') || name.includes('entry_poing') || name.includes('base_platform_where_user_move')) return layoutMaterials.CircusTentInteriorFloor;
+                if (name.includes('arcade_game_obstacle') || name.includes('_m2') || name.includes('staff') || materialKey.includes('lambert4')) return layoutMaterials.CircusTentInteriorProp;
                 return layoutMaterials.CircusTentInteriorFloor;
             }
             if (sceneStyle === 'circus') {
@@ -1201,8 +1204,27 @@
                     });
                     const geometry = new THREE.BufferGeometry();
                     geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+                    const forcePlanarUvs = sceneStyle === 'circusTent' && objectName.includes('entry_poing');
+                    if (objectData.uvs.length === objectData.faces.length && !forcePlanarUvs) {
+                        const uvs = [];
+                        objectData.uvs.forEach((index) => {
+                            const uv = texcoords[index];
+                            uvs.push(uv.u, uv.v);
+                        });
+                        geometry.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
+                    } else if (sceneStyle === 'circusTent') {
+                        geometry.computeBoundingBox();
+                        const box = geometry.boundingBox;
+                        const width = Math.max(0.001, box.max.x - box.min.x);
+                        const depth = Math.max(0.001, box.max.z - box.min.z);
+                        const uvs = [];
+                        for (let i = 0; i < positions.length; i += 3) {
+                            uvs.push((positions[i] - box.min.x) / width, (positions[i + 2] - box.min.z) / depth);
+                        }
+                        geometry.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
+                    }
                     geometry.computeVertexNormals();
-                    tentTrial.obstaclePrototype = { geometry };
+                    tentTrial.obstaclePrototype = { geometry, material: getLayoutMaterial(objectData, false, sceneStyle) };
                     return;
                 }
 
@@ -1217,12 +1239,23 @@
 
                     const geometry = new THREE.BufferGeometry();
                     geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
-                    if (objectData.uvs.length === objectData.faces.length) {
+                    const forcePlanarUvs = sceneStyle === 'circusTent' && objectName.includes('entry_poing');
+                    if (objectData.uvs.length === objectData.faces.length && !forcePlanarUvs) {
                         const uvs = [];
                         objectData.uvs.forEach((index) => {
                             const uv = texcoords[index];
                             uvs.push(uv.u, uv.v);
                         });
+                        geometry.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
+                    } else if (sceneStyle === 'circusTent') {
+                        geometry.computeBoundingBox();
+                        const box = geometry.boundingBox;
+                        const width = Math.max(0.001, box.max.x - box.min.x);
+                        const depth = Math.max(0.001, box.max.z - box.min.z);
+                        const uvs = [];
+                        for (let i = 0; i < positions.length; i += 3) {
+                            uvs.push((positions[i] - box.min.x) / width, (positions[i + 2] - box.min.z) / depth);
+                        }
                         geometry.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
                     }
                     geometry.computeVertexNormals();
@@ -1458,7 +1491,7 @@
                 addObjLayoutToScene(objText, circusGroup, 'circus');
                 circusReady = true;
             });
-        fetch('assets/environment/inside%20circus%20tent%20scene.obj?v=20260907d')
+        fetch('assets/environment/inside%20circus%20tent%20scene.obj?v=20260907e')
             .then((response) => {
                 if (!response.ok) throw new Error('Could not load inside circus tent scene.obj');
                 return response.text();
@@ -1562,9 +1595,10 @@
             baseHealthDisplay.style.display = areaName === 'basement' ? 'block' : 'none';
             scene.background = createBackgroundTexture(areaName);
             sceneVignette.classList.toggle('ritual-active', areaName === 'basement');
-            dashBtn.style.display = areaName === 'circusTent' ? 'none' : 'flex';
-            slashBtn.textContent = areaName === 'circusTent' ? 'JUMP' : 'SLASH';
-            slashBtn.style.display = 'flex';
+            dashBtn.textContent = areaName === 'circusTent' ? 'JUMP' : 'DASH';
+            dashBtn.style.display = 'flex';
+            slashBtn.textContent = 'SLASH';
+            slashBtn.style.display = areaName === 'circusTent' ? 'none' : 'flex';
 
             if (areaName !== 'basement') {
                 clearEnemies();
@@ -1593,6 +1627,8 @@
             new THREE.Vector3(-2.4, 0.5, -0.25),
             new THREE.Vector3(2.4, 0.5, 0.2)
         ];
+        const tentObstacleColor = 0xe83326;
+
         const tentTrialStages = [
             { dirs: ['front'], speed: 3.25, delay: 1.7 },
             { dirs: ['front', 'left'], speed: 3.75, delay: 1.4 },
@@ -1720,7 +1756,12 @@
             } else {
                 geometry = new THREE.BoxGeometry(11.4, 0.28, 0.34);
             }
-            const material = new THREE.MeshBasicMaterial({ color: 0xf04d32, transparent: true, opacity: 0.96, side: THREE.DoubleSide });
+            const material = new THREE.MeshBasicMaterial({
+                color: tentObstacleColor,
+                transparent: true,
+                opacity: 0.96,
+                side: THREE.DoubleSide
+            });
             const mesh = new THREE.Mesh(geometry, material);
             mesh.name = 'TentTrialObstacle_' + directionName;
             mesh.position.set(dir.start.x, 0.24, dir.start.z);
@@ -2647,7 +2688,7 @@
         };
         const triggerSlash = (e) => {
             e.preventDefault();
-            if (triggerTentJump()) return;
+            if (activeArea === 'circusTent') return;
             if (slashRecoveryTimer > 0) return;
             updateLastMoveDir();
             const slashDir = getSlashWorldDirection();
