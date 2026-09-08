@@ -346,3 +346,9 @@
 - Added the supplied Rite of the Hollow Glade audio as a continuous loop at 15% volume, with user-gesture playback fallback for mobile browsers.
 - Pause music while the page is hidden and resume previously unlocked playback on return.
 - Increased background music volume from 15% to 25% after playtesting.
+
+## Session 61
+- Fixed direct index.html playback: bundled the five OBJ scenes, image textures, and map masks to avoid browser file-origin restrictions.
+- Kept server loading on original assets and shared the same scene parsing and game logic between both modes.
+- Added scripts/build-offline.cjs and OFFLINE.md so the direct-file bundle can be refreshed after future asset updates.
+- Verified all five scenes, local images, and music using a direct file URL with networking disabled; no failed requests or JavaScript errors, and scene object counts match the server version.

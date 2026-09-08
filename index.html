@@ -849,11 +849,38 @@
     <div id="cinematic-button">TALK</div>
 
     <!-- Local dependencies inside vendor folder to avoid network requests -->
+    <script>
+        if (location.protocol === 'file:') {
+            document.write('<script src="assets/offline-data.js"><\/script>');
+        }
+    </script>
     <script src="vendor/three.min.js"></script>
         <script src="vendor/GLTFLoader.js"></script>
 <script src="vendor/nipplejs.min.js"></script>
     
     <script>
+        const isDirectFile = location.protocol === 'file:';
+        const offlineAssetKey = (url) => decodeURIComponent(url.split('?')[0]);
+        if (isDirectFile) {
+            if (!window.offlineGameAssets) throw new Error('Offline asset bundle missing. Run node scripts/build-offline.cjs.');
+            THREE.DefaultLoadingManager.setURLModifier((url) => {
+                if (!url.startsWith('assets/')) return url;
+                const asset = window.offlineGameAssets[offlineAssetKey(url)];
+                if (!asset) throw new Error('Missing offline texture: ' + url);
+                return asset;
+            });
+            const indicator = window.offlineGameAssets['assets/environment/map indicator fill.png'];
+            const offlineMaskStyle = document.createElement('style');
+            offlineMaskStyle.textContent = '.map-indicator, .map-indicator-fill { mask-image: url("' + indicator + '"); -webkit-mask-image: url("' + indicator + '"); }';
+            document.head.appendChild(offlineMaskStyle);
+        }
+        const loadSceneAsset = (url) => {
+            if (!isDirectFile) return fetch(url);
+            const text = window.offlineGameAssets[offlineAssetKey(url)];
+            return text === undefined
+                ? Promise.reject(new Error('Missing offline scene: ' + url))
+                : Promise.resolve({ ok: true, text: () => Promise.resolve(text) });
+        };
         // --- 1. Basic Setup ---
         const canvas = document.getElementById('game-canvas');
         
@@ -1810,7 +1837,7 @@
             if (!generatedRing) createGeneratedRitualRing(targetGroup);
         };
 
-        fetch('assets/environment/base underground ritual scene.obj')
+        loadSceneAsset('assets/environment/base underground ritual scene.obj')
             .then((response) => {
                 if (!response.ok) throw new Error('Could not load base underground ritual scene.obj');
                 return response.text();
@@ -1821,7 +1848,7 @@
             })
             .catch(() => addFallbackBaseLayout());
 
-        fetch('assets/environment/home%20lobby%20scene.obj?v=20260904f')
+        loadSceneAsset('assets/environment/home%20lobby%20scene.obj?v=20260904f')
             .then((response) => {
                 if (!response.ok) throw new Error('Could not load home lobby scene.obj');
                 return response.text();
@@ -1831,7 +1858,7 @@
                 lobbyReady = true;
             });
 
-        fetch('assets/environment/shop%20beach%20scene.obj?v=20260908c')
+        loadSceneAsset('assets/environment/shop%20beach%20scene.obj?v=20260908c')
             .then((response) => {
                 if (!response.ok) throw new Error('Could not load shop beach scene.obj');
                 return response.text();
@@ -1857,7 +1884,7 @@
             });
 
 
-        fetch('assets/environment/Circus%20scene%20textures/circus%20enviornment.obj?v=20260908a')
+        loadSceneAsset('assets/environment/Circus%20scene%20textures/circus%20enviornment.obj?v=20260908a')
             .then((response) => {
                 if (!response.ok) throw new Error('Could not load circus enviornment.obj');
                 return response.text();
@@ -1887,7 +1914,7 @@
                 }
                 circusReady = true;
             });
-        fetch('assets/environment/inside%20circus%20tent%20scene.obj?v=20260908a')
+        loadSceneAsset('assets/environment/inside%20circus%20tent%20scene.obj?v=20260908a')
             .then((response) => {
                 if (!response.ok) throw new Error('Could not load inside circus tent scene.obj');
                 return response.text();
