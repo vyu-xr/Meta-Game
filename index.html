@@ -2439,12 +2439,13 @@
         const gameOpeningIcon = document.getElementById('game-opening-icon');
         const gameMusic = document.getElementById('game-music');
         gameMusic.volume = 0.25;
+        gameMusic.muted = true;
         let musicUnlocked = false;
         const startGameMusic = () => {
             if (document.hidden || !gameMusic.paused) return;
             gameMusic.play().then(() => { musicUnlocked = true; }).catch(() => {});
         };
-        // Browsers may require a user gesture before the first audio playback.
+        // A tap during the logo unlocks playback silently; the story starts the audible music.
         document.addEventListener('pointerdown', startGameMusic, { capture: true });
         document.addEventListener('touchstart', startGameMusic, { capture: true, passive: true });
         document.addEventListener('keydown', startGameMusic, { capture: true });
@@ -2452,7 +2453,6 @@
             if (document.hidden) gameMusic.pause();
             else if (musicUnlocked) startGameMusic();
         });
-        startGameMusic();
         const storyIntroSlates = Array.from(document.querySelectorAll('.story-intro-slate'));
         const storyIntroDialogueLine = document.getElementById('story-intro-dialogue-line');
         const storyIntroDialogue = [
@@ -2543,6 +2543,9 @@
                 const opacity = Math.max(0, Math.min(1, (t - 0.3) / 1.2, (4.7 - t) / 1.2));
                 gameOpeningIcon.style.opacity = String(opacity * opacity * (3 - 2 * opacity));
                 if (t >= 5.0) {
+                    gameMusic.currentTime = 0;
+                    gameMusic.muted = false;
+                    startGameMusic();
                     storyIntroMode = 'slates';
                     storyIntroTimer = 0;
                     storyIntroOverlay.classList.remove('splash');
