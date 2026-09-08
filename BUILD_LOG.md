@@ -206,3 +206,143 @@
 - Changed circus arcade obstacles to use flat randomized colors without applying the obstacle texture during runtime.
 - Set circus arcade obstacles back to a single red color for clearer danger readability.
 - Hid the slash button in the circus tent and moved the jump action onto the dash button while the arcade trial is active.
+- Switched the human form model source to the new character switch 3d/ch boy.glb asset while keeping the existing unlock flow.
+- Built and loaded ch_boy_game.glb with the new character texture embedded plus Idle, Walk, and Jump clips from the character switch 3d FBX files; adjusted facing offset for the new model.
+- Forced the new 3D boy to flat textured MeshBasicMaterial and updated animation state selection so jumping is not immediately overwritten by idle/walk.
+- Added a light runtime correction to the new Mixamo boy hand and forearm bones so the stylized model avoids the curled/twisted hand pose while animations play.
+- Strengthened the runtime wrist correction for the 3D boy so the small-screen hand pose reads cleaner.
+- Added a 35% upper-arm/shoulder neutral blend to reduce the new 3D boy character arms rotating inward.
+- Replaced the 3D human-form GLB with a 2D animated sprite plane using the new character switch 2d idle/front/back/side run strips.
+- Added 2D human-form strip playback for idle, front run, back run, and side run with direction-based sprite switching and jump-height reuse.
+- Increased the 2D human-form sprite scale by about 20% while keeping the soul sprite unchanged.
+- Increased the circus tent jump height for the 2D human-form character and matching obstacle-clearance check, without changing jump cooldown or obstacle timing.
+- Tuned circus tent jump values to visual lift 1.0 and obstacle-clearance height 1.15 for a smaller difficulty adjustment.
+- Refreshed cache keys for the updated 2D human-form character sheets after confirming frame dimensions were unchanged.
+- Moved the circus tent jump action from the dash button to the hidden talk-button position, showing it as JUMP only during the tent trial.
+- Enlarged the circus tent jump button and hid the dash button until its unlock/enable timing is decided.
+- Added the first pass of the day/night flow: night exit locks, two timed day parts, circus day-part spending, circus closed messaging, and clock sector movement.
+- Expanded daytime to three 20-second parts, kept circus available only during the first two day parts, added a final prep/shop period, and delayed night start while the player is still shopping or buying.
+- Changed circus trial failure so it opens the tent exit instead of auto-restarting, letting the player leave and retry later if day time remains.
+- Changed circus trial attempts to consume one day part when the trial begins, so failed attempts also count toward the two daytime circus plays.
+- Adjusted night onboarding so Night 1 uses only Wave 1 and does not light the first ritual fire; Night 2 and later use the fuller wave set and can light the candle after survival.
+- Refreshed the clock UI cache key after updating the clock PNG asset.
+- Added automatic player form switching so basement/night gameplay always shows the ghost soul, while the 2D human form appears only during daytime outside the basement.
+
+## Session 33
+- Adjusted the 2D human-form sprite render layer so flat environment props no longer visually overlap the player character.
+
+## Session 34
+- Added Night 1 story progression so surviving the first night automatically unlocks the human form and marks the starter shop card as obtained.
+- Added night-attempt soul coin tracking: ghosts killed during a night count toward that night's earnings, and failing the night removes 50% of only those earned coins before retrying the same night.
+
+## Session 35
+- Added a four-panel opening story intro using the new start story slate PNGs, with two-second auto advance and tap/click to advance faster.
+- Paused gameplay, clock, movement, and enemy spawning until the story intro finishes, then handed off to the existing ritual eye-glow intro.
+
+## Session 36
+- Fixed the opening story intro to use start stories.jpg as the visible story art and b1-b4.png as fading black reveal slates instead of displaying the black slates as standalone slides.
+
+## Session 37
+- Adjusted the opening story reveal so the first panel starts visible, removed b1.png from the black reveal stack, and slowed auto reveal timing to five seconds per panel.
+
+## Session 38
+- Added a post-story black-screen Grandma dialogue beat after the final story reveal, with tap/click advance and a short pause before the ritual intro starts.
+
+## Session 39
+- Slowed the Day message gesture and separated the Human Form Awakened message from the Day 1 message so day-start feedback is readable.
+
+## Session 40
+- Refreshed the shop OBJ cache version to load the updated shop layout.
+- Read the hidden soul platform's exported position for the shop card interaction without displaying its mesh.
+
+## Session 41
+- Refreshed the updated shop m2 texture and assigned taort tent.png to the tarot_tent mesh using its exported UVs.
+- Used a double-sided transparent material for the tent image.
+
+## Session 42
+- Assigned t1-t4 PNG tree variants to the shop tree planes using a stable name-based random mix.
+- Preserved exported placement and UVs, with double-sided alpha cutouts for the tree silhouettes.
+
+## Session 43
+- Refreshed the latest shop OBJ and updated m2 texture cache versions.
+- Checked that the exported mesh names still match the existing shop and tree material assignments.
+
+## Session 44
+- Constrained the shop purchase approach to the exported walkable plane and shop bounds.
+- Removed the unconditional saving of the purchase position as valid, which could trap the player outside the movement area after changing to human form.
+
+## Session 45
+- Added the shopkeeper's five-line introduction in a black bottom dialogue panel, with automatic advance and tap to continue.
+- Revealed the Human Form Card after the dialogue as a free starter gift with a TAKE action and the existing acquisition animation.
+- Added a three-card shop view using placeholder Human Form artwork: Dash (100), Soul Mine (20), and Aura Shield (50), all locked.
+- Paused movement and day time during the shop session; added close and return-to-shop flow without replaying the introduction.
+- Browser-checked the dialogue, zero-coin gift acquisition, locked upgrade buttons, paused day timer, valid player position, and shop reopening without runtime errors.
+
+## Session 46
+- Added a short card shake before the Human Form Card shrinks away.
+- Revealed the boy with a subtle transformation shake and a 1.6-second unobstructed pause before opening the locked shop cards.
+- Kept movement and day time paused throughout the acquisition and transformation reveal.
+
+## Session 47
+- Replaced the three shop placeholder images with the supplied Dash, Soul Mine, and Aura Shield card artwork.
+- Preserved their prices and locked buttons.
+
+## Session 48
+- Added the supplied Enter and Exit images as camera-facing signs at all seven existing scene transition triggers.
+- Positioned signs from the same collider rectangles used for travel, with scene-local visibility and no collider or progression changes.
+
+## Session 49
+- Refreshed the home lobby exit-door mat and room-base texture cache versions to load the updated images.
+
+## Session 50
+- Hid the Dash button in its default CSS so it no longer appears at startup before a scene switch.
+
+## Session 51
+- Added the circus instruction to jump over bars and collect four stone parts, with a matching four-part goal and counter.
+- Made Jump appear alongside the boy during the Human Form Card reveal and work throughout daytime human-form exploration.
+- Kept Jump hidden in soul form and blocked input during shop, map, and cinematic sequences; preserved jump height and cooldown.
+
+## Session 52
+- Converted the updated circus tent FBX to the runtime OBJ with preserved geometry and UVs, and refreshed the exterior OBJ.
+- Assigned the new circus owner and outdoor owner-banner textures to their matching meshes.
+- Added a first-visit instruction dialogue inside the tent, followed by the owner's slide-right animation when START is pressed.
+- Kept the owner hidden on subsequent visits within the current game; the introductory dialogue and slide do not repeat.
+
+## Session 53
+- Read circus spawn, walking bounds, map exit, and tent entrance from the updated OBJ markers instead of the old layout coordinates.
+- Moved the tent return spawn and Enter/Exit signs to match the updated routes, fixing the player spawning outside the walkable area.
+
+## Session 54
+- Hid Enter/Exit signs when their routes are locked, their scenes are inactive, or a story, transition, map, or shop overlay is active.
+- Showed the basement exit after night combat clears and the tent exit after trial completion; hid the circus entrance when closed.
+
+## Session 55
+- Added the supplied circus-owner comic with its three row reveal masks, five-second reading intervals, and tap/keyboard advance.
+- Changed the first tent visit to story, then owner slide, then game instructions and START; obstacles wait until START.
+- Kept repeat visits free of the story and owner introduction.
+
+## Session 56
+- Replaced separate ritual and soul health with one 100-point Body Connection pool; either target taking damage now weakens the same connection.
+- Added a ritual-only connection meter with soul/body endpoints, hit feedback, a critical state, and a shared-connection explanation.
+- Restyled Soul Coins with a compact counter and collection feedback; removed the old movement instruction and health text.
+- Restored full connection when a night clears, at day start, before each new night, and on a failed-night retry.
+
+## Session 57
+- Created DESIGN_INTENT.docx with 397 words covering the audience, premise, current prototype, and future-state vision.
+- Embedded the three supplied stone PNGs in a table explaining challenge, crafting, and trading acquisition paths.
+- Validated the document text and embedded images and checked a browser-rendered page preview.
+
+## Session 58
+- Refreshed the latest shop beach OBJ and read its walking bounds, spawn, and map exit from the exported markers.
+- Expanded the left movement limit to match the updated walking plane and kept the Exit sign aligned.
+
+## Session 59
+- Added the two supplied instruction images after the first night's opening wave clears.
+- Added NEXT on the first page and BEGIN on the second; Day 1 begins only after BEGIN is pressed.
+- Paused gameplay and kept exits locked during this one-time instruction sequence; later nights retain their normal day transition.
+
+## Session 60
+- Added the generated Grandma's Veil icon before the opening story: fade in from black, hold, and fade back to black.
+- Added the supplied Rite of the Hollow Glade audio as a continuous loop at 15% volume, with user-gesture playback fallback for mobile browsers.
+- Pause music while the page is hidden and resume previously unlocked playback on return.
+- Increased background music volume from 15% to 25% after playtesting.

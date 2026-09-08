@@ -43,7 +43,7 @@
             font-size: 20px;
             font-family: sans-serif;
             font-weight: bold;
-            display: flex;
+            display: none;
             justify-content: center;
             align-items: center;
             z-index: 10;
@@ -86,8 +86,8 @@
             position: absolute;
             bottom: 235px;
             right: 24px;
-            width: 64px;
-            height: 64px;
+            width: 76px;
+            height: 76px;
             border-radius: 50%;
             background-color: rgba(120, 190, 255, 0.42);
             border: 3px solid rgba(255, 255, 255, 0.86);
@@ -112,6 +112,8 @@
             top: 86px;
             transform: translateX(-50%);
             min-width: 210px;
+            width: min(330px, calc(100% - 24px));
+            box-sizing: border-box;
             padding: 10px 14px;
             border: 2px solid rgba(255, 236, 174, 0.82);
             background: rgba(22, 7, 14, 0.72);
@@ -136,15 +138,42 @@
         /* Simple HUD */
         #hud {
             position: absolute;
-            top: 20px;
-            left: 20px;
-            color: white;
+            top: max(18px, env(safe-area-inset-top));
+            left: 14px;
+            width: min(284px, calc(100% - 116px));
+            color: #f4f8f7;
             font-family: sans-serif;
-            font-size: 16px;
             z-index: 10;
-            text-shadow: 1px 1px 2px black;
             pointer-events: none;
         }
+        #connection-hud {
+            --connection-color: #85ead5;
+            padding: 11px 12px 10px;
+            border-left: 2px solid var(--connection-color);
+            background: rgba(9, 17, 18, 0.9);
+            box-sizing: border-box;
+            margin-bottom: 9px;
+        }
+        #connection-hud[hidden] { display: none; }
+        #connection-hud.critical { --connection-color: #ff7978; }
+        .connection-heading { display: flex; justify-content: space-between; align-items: baseline; gap: 6px; }
+        #connection-label { font-size: 12px; font-weight: 700; line-height: 16px; }
+        #connection-value { flex-shrink: 0; font-size: 14px; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--connection-color); }
+        .connection-endpoints { display: flex; align-items: center; gap: 6px; margin-top: 9px; }
+        .connection-endpoints img { width: 18px; height: 24px; object-fit: contain; }
+        #connection-meter { flex: 1; height: 9px; overflow: hidden; background: #303b3d; border-radius: 4px; }
+        #connection-fill { height: 100%; background: var(--connection-color); transform-origin: left; transition: transform 0.2s ease, background 0.2s ease; }
+        #connection-status { font-size: 10px; line-height: 14px; color: #c0d3d1; margin: 7px 0 0; min-height: 28px; }
+        #connection-hud.hit { animation: connectionHit 0.28s ease; }
+        @keyframes connectionHit { 35% { background: rgba(123, 31, 39, 0.95); transform: translateX(2px); } }
+        #soul-wallet { display: inline-flex; align-items: center; gap: 9px; max-width: 100%; box-sizing: border-box; padding: 7px 11px 7px 8px; border: 1px solid #645736; border-radius: 6px; background: rgba(16, 18, 19, 0.92); }
+        .soul-coin-icon { flex-shrink: 0; width: 25px; height: 25px; border-radius: 50%; box-sizing: border-box; border: 2px solid #edcc6d; background: #645022; box-shadow: inset 0 0 0 2px #292719; display: grid; place-items: center; }
+        .soul-coin-icon::after { content: ''; width: 7px; height: 10px; background: #ffe7a0; transform: rotate(35deg); border-radius: 2px; }
+        .soul-wallet-text { display: flex; flex-direction: column; min-width: 0; gap: 2px; }
+        .soul-wallet-label { font-size: 9px; line-height: 12px; color: #d0c7ae; }
+        #soul-coin-display { font-size: 17px; line-height: 19px; color: #ffe6a3; font-weight: 700; font-variant-numeric: tabular-nums; }
+        #soul-wallet.earned .soul-coin-icon { animation: coinEarned 0.4s ease; }
+        @keyframes coinEarned { 50% { transform: scale(1.16) rotate(12deg); box-shadow: 0 0 10px rgba(237, 204, 109, 0.45); } }
         #night-clock {
             position: absolute;
             top: 18px;
@@ -303,7 +332,7 @@
             background: radial-gradient(circle at 50% 47%, rgba(0, 0, 0, 0.08) 18%, rgba(0, 0, 0, 0.5) 72%, rgba(0, 0, 0, 0.82) 100%);
         }
         #wave-gesture.active {
-            animation: waveGesturePulse 2.1s ease both;
+            animation: waveGesturePulse var(--gesture-duration, 2.1s) ease both;
         }
         #wave-gesture-label {
             color: rgba(236, 244, 255, 0.88);
@@ -315,7 +344,7 @@
             transform: scale(0.92);
         }
         #wave-gesture.active #wave-gesture-label {
-            animation: waveLabelDrift 2.1s ease both;
+            animation: waveLabelDrift var(--gesture-duration, 2.1s) ease both;
         }
         @keyframes waveGesturePulse {
             0% { opacity: 0; }
@@ -329,6 +358,103 @@
             76% { opacity: 0.92; transform: scale(1.02) translateY(-2px); }
             100% { opacity: 0; transform: scale(1.08) translateY(-10px); }
         }
+        #story-intro-overlay {
+            position: absolute;
+            inset: 0;
+            z-index: 92;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #000;
+            opacity: 1;
+            touch-action: manipulation;
+            transition: opacity 0.6s ease;
+        }
+        #story-intro-overlay.hidden {
+            display: none;
+        }
+        #story-intro-overlay.ending {
+            opacity: 0;
+            pointer-events: none;
+        }
+        #game-opening-icon {
+            display: none;
+            width: min(88vw, 540px, 76vh);
+            aspect-ratio: 1;
+            object-fit: contain;
+            opacity: 0;
+        }
+        #story-intro-overlay.splash #game-opening-icon {
+            display: block;
+        }
+        #story-intro-overlay.splash #story-intro-frame {
+            display: none;
+        }
+        #story-intro-frame {
+            position: relative;
+            width: min(88vw, 540px);
+            max-height: 80vh;
+            aspect-ratio: 547 / 820;
+            filter: drop-shadow(0 18px 28px rgba(0, 0, 0, 0.55));
+            overflow: hidden;
+        }
+        #story-intro-image,
+        .story-intro-slate {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: fill;
+        }
+        #story-intro-image {
+            z-index: 1;
+        }
+        .story-intro-slate {
+            z-index: 2;
+            opacity: 1;
+            transition: opacity 0.52s ease;
+        }
+        .story-intro-slate.revealed {
+            opacity: 0;
+        }
+        #story-intro-overlay.dialogue #story-intro-frame {
+            opacity: 0;
+            transform: scale(0.985);
+            transition: opacity 0.72s ease, transform 0.72s ease;
+        }
+        #story-intro-dialogue {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            width: min(78vw, 460px);
+            transform: translate(-50%, -50%) translateY(14px);
+            opacity: 0;
+            color: #f7efe1;
+            font-family: Georgia, 'Times New Roman', serif;
+            text-align: left;
+            pointer-events: none;
+            transition: opacity 0.72s ease, transform 0.72s ease;
+        }
+        #story-intro-overlay.dialogue #story-intro-dialogue {
+            opacity: 1;
+            transform: translate(-50%, -50%) translateY(0);
+        }
+        #story-intro-speaker {
+            margin-bottom: 16px;
+            color: #e0b77f;
+            font-size: clamp(18px, 4.6vw, 25px);
+            font-weight: 700;
+        }
+        #story-intro-dialogue-line {
+            min-height: 86px;
+            font-size: clamp(22px, 6vw, 34px);
+            line-height: 1.25;
+            text-shadow: 0 0 18px rgba(255, 220, 180, 0.18);
+            transition: opacity 0.22s ease;
+        }
+        #story-intro-dialogue-line.fading {
+            opacity: 0;
+        }
         #fade-overlay {
             position: absolute;
             inset: 0;
@@ -341,6 +467,126 @@
         #fade-overlay.active {
             opacity: 1;
         }
+        #shop-overlay {
+            position: absolute;
+            inset: 0;
+            z-index: 46;
+            background: rgba(0, 0, 0, 0.32);
+            color: #f3f3f3;
+            font-family: sans-serif;
+            touch-action: manipulation;
+        }
+        #shop-overlay [hidden], #shop-overlay[hidden] { display: none !important; }
+        #tent-briefing[hidden] { display: none; }
+        #circus-story-screen[hidden] { display: none; }
+        #night-instructions[hidden], #night-instructions [hidden] { display: none !important; }
+        #night-instructions { position: absolute; inset: 0; z-index: 90; background: rgba(0, 0, 0, 0.97); display: flex; justify-content: center; align-items: center; font-family: sans-serif; touch-action: manipulation; }
+        #night-instructions-content { width: min(563px, calc(100% - 24px), calc((100dvh - 112px) * 563 / 695)); }
+        #night-instructions-art { aspect-ratio: 563 / 695; width: 100%; }
+        #night-instructions-art img { display: block; width: 100%; height: 100%; object-fit: contain; }
+        #night-instructions-controls { display: flex; align-items: center; gap: 12px; margin-top: 14px; }
+        #night-instructions-next { flex: 1; min-height: 48px; border: 1px solid #e4c37a; border-radius: 5px; background: #e4c37a; color: #241b15; font: 700 16px sans-serif; }
+        #night-instructions-back { width: 44px; height: 48px; border: 1px solid #756044; border-radius: 5px; background: #19151b; color: #f5e3bd; font-size: 23px; }
+        #night-instructions-page { color: #c5baab; font-size: 12px; min-width: 32px; text-align: center; }
+        body.night-instructions-open #hud, body.night-instructions-open #night-clock,
+        body.night-instructions-open #joystick-zone, body.night-instructions-open #slash-button,
+        body.night-instructions-open #cinematic-button { visibility: hidden; }
+        #circus-story-screen {
+            position: absolute;
+            inset: 0;
+            z-index: 90;
+            background: #000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 1;
+            transition: opacity 0.6s ease;
+            touch-action: manipulation;
+            outline: none;
+        }
+        #circus-story-screen.ending { opacity: 0; }
+        #circus-story-frame { position: relative; width: min(547px, 96%, calc(94dvh * 547 / 820)); aspect-ratio: 547 / 820; }
+        #circus-story-frame img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: fill; pointer-events: none; }
+        .circus-story-mask { opacity: 1; transition: opacity 0.55s ease; }
+        .circus-story-mask.revealed { opacity: 0; }
+        #tent-briefing {
+            position: absolute;
+            z-index: 46;
+            bottom: max(20px, env(safe-area-inset-bottom));
+            left: 50%;
+            transform: translateX(-50%);
+            width: min(480px, calc(100% - 24px));
+            box-sizing: border-box;
+            padding: 20px;
+            border-radius: 6px;
+            border-top: 1px solid #656565;
+            background: rgba(0, 0, 0, 0.96);
+            color: #f3f3f3;
+            font: 16px/1.5 sans-serif;
+        }
+        #tent-briefing p { margin: 12px 0 20px; }
+        #tent-briefing-start { width: 100%; min-height: 44px; border: 1px solid #b2decb; border-radius: 4px; background: #253b34; color: #fff; font: 700 15px sans-serif; }
+        body.tent-briefing #joystick-zone, body.tent-briefing #cinematic-button { visibility: hidden; }
+        #shop-overlay.transforming { background: transparent; }
+        body.shop-open.shop-transforming #cinematic-button { visibility: visible; z-index: 47; pointer-events: none; }
+        body.shop-open #joystick-zone,
+        body.shop-open #slash-button,
+        body.shop-open #dash-button,
+        body.shop-open #cinematic-button { visibility: hidden; }
+        #shop-dialogue {
+            position: absolute;
+            bottom: max(20px, env(safe-area-inset-bottom));
+            left: 50%;
+            transform: translateX(-50%);
+            width: min(620px, calc(100% - 24px));
+            box-sizing: border-box;
+            padding: 20px 56px 22px 20px;
+            background: rgba(0, 0, 0, 0.96);
+            border-top: 1px solid #656565;
+            border-radius: 6px;
+            min-height: 160px;
+            cursor: pointer;
+        }
+        .shop-speaker { color: #b2decb; font-size: 13px; font-weight: 700; margin-bottom: 12px; }
+        #shop-dialogue-line { font-size: 17px; line-height: 1.5; margin: 0; overflow-wrap: anywhere; }
+        #shop-dialogue-line.emphasis { font-weight: 700; }
+        #shop-dialogue-line.revealing { animation: shopLineReveal 0.3s ease both; }
+        @keyframes shopLineReveal { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+        #shop-dialogue-next, #shop-catalogue-close {
+            width: 44px;
+            height: 44px;
+            padding: 0;
+            border: 0;
+            background: transparent;
+            color: #fff;
+            font-size: 30px;
+            cursor: pointer;
+        }
+        #shop-dialogue-next { position: absolute; right: 6px; bottom: 12px; }
+        #shop-catalogue {
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            max-height: 90%;
+            overflow-y: auto;
+            padding: 20px 12px max(24px, env(safe-area-inset-bottom));
+            box-sizing: border-box;
+            background: rgba(9, 11, 12, 0.97);
+            border-top: 1px solid #56635e;
+            animation: shopLineReveal 0.35s ease both;
+        }
+        #shop-catalogue header { display: flex; align-items: center; justify-content: space-between; max-width: 660px; margin: 0 auto; gap: 8px; }
+        #shop-catalogue h2 { font-size: 21px; margin: 0; }
+        #shop-wallet { max-width: 660px; margin: 0 auto 20px; font-size: 14px; color: #b2decb; }
+        .shop-cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; max-width: 660px; margin: auto; }
+        .shop-upgrade { min-width: 0; text-align: center; }
+        .shop-upgrade img { width: 100%; max-height: 240px; aspect-ratio: 2 / 3; object-fit: contain; display: block; height: auto; opacity: 0.78; }
+        .shop-upgrade h3 { font-size: 14px; min-height: 36px; line-height: 18px; margin: 12px 0 6px; overflow-wrap: anywhere; }
+        .shop-upgrade p { color: #f5db67; font-size: 18px; font-weight: 700; margin: 0 0 12px; }
+        .shop-upgrade p span { display: block; font-size: 11px; color: #afbab6; font-weight: 400; margin-top: 4px; }
+        .shop-upgrade button { height: 44px; width: 100%; padding: 0 4px; border: 1px solid #4a5150; border-radius: 4px; color: #a9afad; background: #242929; font-size: 12px; font-weight: 700; }
+        #shop-overlay button:focus-visible { outline: 2px solid #b2decb; outline-offset: 2px; }
         #shop-purchase-panel {
             position: absolute;
             left: 50%;
@@ -365,6 +611,11 @@
             opacity: 1;
             transform: translate(-50%, -50%) scale(1);
             pointer-events: auto;
+            animation: shopOfferReveal 0.32s ease both;
+        }
+        @keyframes shopOfferReveal {
+            from { opacity: 0; transform: translate(-50%, -45%) scale(0.9); }
+            to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
         }
         #shop-purchase-title {
             margin: 0 42px 6px 0;
@@ -382,8 +633,8 @@
             position: absolute;
             top: 10px;
             right: 10px;
-            width: 32px;
-            height: 32px;
+            width: 44px;
+            height: 44px;
             border: 1px solid rgba(255, 255, 255, 0.25);
             border-radius: 50%;
             background: rgba(255, 255, 255, 0.08);
@@ -401,11 +652,15 @@
             transition: transform 0.18s ease, opacity 0.18s ease;
         }
         #shop-purchase-panel.buying #shop-purchase-card-art {
-            animation: shopCardBuy 0.62s ease both;
+            animation: shopCardBuy 0.75s ease both;
         }
         @keyframes shopCardBuy {
             0% { opacity: 1; transform: translateY(0) scale(1); }
-            42% { opacity: 1; transform: translateY(-12px) scale(1.08); }
+            12% { transform: translateX(-5px) rotate(-4deg) scale(1.03); }
+            24% { transform: translateX(5px) rotate(4deg) scale(1.06); }
+            36% { transform: translateX(-4px) rotate(-3deg) scale(1.08); }
+            48% { transform: translateX(3px) rotate(2deg) scale(1.08); }
+            60% { opacity: 1; transform: translateY(-12px) rotate(0) scale(1.1); }
             100% { opacity: 0; transform: translateY(18px) scale(0.18); }
         }
         #shop-purchase-price {
@@ -413,7 +668,7 @@
             align-items: center;
             justify-content: center;
             min-height: 30px;
-            margin: 4px 34px 12px 0;
+            margin: 4px 0 12px;
             color: #ffe1a0;
             font-size: 18px;
             font-weight: 800;
@@ -486,13 +741,19 @@
 </head>
 <body>
     <div id="hud">
-        Move with Joystick, DASH & SLASH!<br>
-        <span id="base-health-display" style="color: #ffcccc; font-weight: bold;">Base Health: 100</span><br>
-        <span id="soul-health-display" style="color: #cde9ff; font-weight: bold;">Soul Health: 100</span><br>
-        <span id="soul-coin-display" style="color: #ffe3a3; font-weight: bold;">Soul Coins: 0</span>
+        <div id="connection-hud">
+            <div class="connection-heading"><span id="connection-label">Body Connection</span><span id="connection-value">100%</span></div>
+            <div class="connection-endpoints">
+                <img src="assets/character/soul-hero.png" alt="Soul">
+                <div id="connection-meter" role="progressbar" aria-labelledby="connection-label" aria-describedby="connection-status" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100"><div id="connection-fill"></div></div>
+                <img src="assets/character/sleep%20character.png?v=20260903a" alt="Body">
+            </div>
+            <p id="connection-status">Soul and ritual share one connection.</p>
+        </div>
+        <div id="soul-wallet"><span class="soul-coin-icon" aria-hidden="true"></span><div class="soul-wallet-text"><span class="soul-wallet-label">SOUL COINS</span><span id="soul-coin-display" aria-label="0 soul coins">0</span></div></div>
     </div>
     <div id="night-clock" aria-hidden="true">
-        <img id="night-clock-face" src="assets/ui/clock.png?v=20260904a" alt="">
+        <img id="night-clock-face" src="assets/ui/clock.png?v=20260908a" alt="">
         <img id="night-clock-indicator" src="assets/ui/clock%20indicator.png?v=20260904a" alt="">
     </div>
     <canvas id="game-canvas"></canvas>
@@ -514,17 +775,74 @@
     <div id="scene-vignette" class="ritual-active"></div>
     <div id="tent-trial-hud" aria-hidden="true">
         <span id="tent-trial-title">Circus Trial</span>
-        <span id="tent-trial-status" class="small">Collect 5 charms</span>
+        <span id="tent-trial-instruction" class="small">Jump over the bars. Collect 4 stone parts.</span>
+        <span id="tent-trial-status" class="small">0/4 stone parts</span>
     </div>
     <div id="wave-gesture" aria-hidden="true"><div id="wave-gesture-label"></div></div>
+    <audio id="game-music" src="assets/audio/Rite_of_the_Hollow_Glade.mp3" loop preload="auto"></audio>
+    <div id="story-intro-overlay" class="splash" aria-hidden="false">
+        <img id="game-opening-icon" src="assets/ui/grandmas-veil-icon-v1.png" alt="Grandma's Veil">
+        <div id="story-intro-frame">
+            <img id="story-intro-image" src="assets/stories/start%20stories/start%20stories.jpg?v=20260908a" alt="">
+            <img class="story-intro-slate" src="assets/stories/start%20stories/b2.png?v=20260908a" alt="">
+            <img class="story-intro-slate" src="assets/stories/start%20stories/b3.png?v=20260908a" alt="">
+            <img class="story-intro-slate" src="assets/stories/start%20stories/b4.png?v=20260908a" alt="">
+        </div>
+        <div id="story-intro-dialogue" aria-live="polite">
+            <div id="story-intro-speaker">Grandma:</div>
+            <div id="story-intro-dialogue-line"></div>
+        </div>
+    </div>
     <div id="fade-overlay" class="active"></div>
-    <div id="shop-purchase-panel" aria-hidden="true">
+    <div id="shop-overlay" hidden>
+    <div id="shop-dialogue" hidden>
+        <div class="shop-speaker">Shopkeeper</div>
+        <p id="shop-dialogue-line" aria-live="polite"></p>
+        <button id="shop-dialogue-next" type="button" aria-label="Continue dialogue" title="Continue">&#8250;</button>
+    </div>
+    <div id="shop-catalogue" role="dialog" aria-modal="true" aria-labelledby="shop-catalogue-title" hidden>
+        <header><h2 id="shop-catalogue-title">The Spirit Shop</h2><button id="shop-catalogue-close" type="button" aria-label="Close shop" title="Close shop">&#215;</button></header>
+        <div id="shop-wallet"></div>
+        <div class="shop-cards">
+            <article class="shop-upgrade"><img src="assets/shop/soul%20dash%20card%20-100.png?v=20260908a" alt=""><h3>Dash</h3><p>100 <span>Soul Coins</span></p><button type="button" disabled>LOCK</button></article>
+            <article class="shop-upgrade"><img src="assets/shop/soul%20mine%20-20.png?v=20260908a" alt=""><h3>Soul Mine</h3><p>20 <span>Soul Coins</span></p><button type="button" disabled>LOCK</button></article>
+            <article class="shop-upgrade"><img src="assets/shop/aura%20shield%20card%20-50.png?v=20260908a" alt=""><h3>Aura Shield</h3><p>50 <span>Soul Coins</span></p><button type="button" disabled>LOCK</button></article>
+        </div>
+    </div>
+    <div id="shop-purchase-panel" role="dialog" aria-modal="true" aria-label="Human Form Card" aria-hidden="true" hidden>
         <button id="shop-purchase-close" type="button" aria-label="Cancel purchase">x</button>
         <img id="shop-purchase-card-art" src="assets/shop/Human%20form%20card%20-%2010.png?v=20260905a" alt="">
-        <div id="shop-purchase-price">10 Soul Coins</div>
-        <button id="shop-purchase-buy" type="button">BUY</button>
+        <div id="shop-purchase-price">A gift</div>
+        <button id="shop-purchase-buy" type="button">TAKE</button>
+    </div>
     </div>
     <!-- Zone for nipple.js to bind to -->
+    <div id="night-instructions" role="dialog" aria-modal="true" aria-label="Ritual instructions" hidden>
+        <div id="night-instructions-content">
+            <div id="night-instructions-art">
+                <img id="night-instruction-one" src="assets/ui/instruction%201.png?v=20260908a" alt="Collect three Soul Stones to complete the ritual and reclaim your human form.">
+                <img id="night-instruction-two" src="assets/ui/instruction%202.png?v=20260908a" alt="Find three Soul Stones. Each completed ritual step restores the soul's power, but makes the ghosts stronger. Upgrade your abilities and prepare for the next night, then complete the final ritual." hidden>
+            </div>
+            <div id="night-instructions-controls">
+                <button id="night-instructions-back" type="button" title="Previous instructions" aria-label="Previous instructions" hidden>&#8592;</button>
+                <span id="night-instructions-page" aria-live="polite">1 / 2</span>
+                <button id="night-instructions-next" type="button">NEXT</button>
+            </div>
+        </div>
+    </div>
+    <div id="circus-story-screen" role="dialog" aria-modal="true" aria-label="The ringmaster's challenge. Tap to continue." tabindex="0" hidden>
+        <div id="circus-story-frame">
+            <img src="assets/stories/circus%20storie/cirucs%20story.png?v=20260908a" alt="The ringmaster offers the boy a challenge, shatters the stone, and asks him to prove himself.">
+            <img class="circus-story-mask" src="assets/stories/circus%20storie/1b.png?v=20260908a" alt="">
+            <img class="circus-story-mask" src="assets/stories/circus%20storie/2b.png?v=20260908a" alt="">
+            <img class="circus-story-mask" src="assets/stories/circus%20storie/3b.png?v=20260908a" alt="">
+        </div>
+    </div>
+    <div id="tent-briefing" role="dialog" aria-modal="true" aria-labelledby="tent-briefing-speaker" hidden>
+        <div id="tent-briefing-speaker" class="shop-speaker">Circus Trial</div>
+        <p>Jump over the bars and collect all 4 stone parts.<br>Watch the arrows. One hit ends the trial.</p>
+        <button id="tent-briefing-start" type="button">START</button>
+    </div>
     <div id="joystick-zone"></div>
     <div id="dash-button">DASH</div>
     <div id="slash-button">SLASH</div>
@@ -636,16 +954,51 @@
         const humanFormActions = {};
         let humanFormActionName = '';
         let humanFormUnlocked = false;
+        let humanFormAnimTime = 0;
+        const humanFormSpriteHeight = 1.66;
+        const humanFormSpriteWidth = 1.66;
+        const makeHumanStripTexture = (path, frames) => {
+            const texture = new THREE.TextureLoader().load(path);
+            texture.minFilter = THREE.LinearFilter;
+            texture.magFilter = THREE.LinearFilter;
+            texture.repeat.set(1 / frames, 1);
+            texture.offset.set(0, 0);
+            return { texture, frames };
+        };
+        const humanFormStrips = {
+            Idle: makeHumanStripTexture('assets/character/character%20switch%202d/idle%20ch%209.png?v=20260908b', 9),
+            FrontRun: makeHumanStripTexture('assets/character/character%20switch%202d/frontch%20run%2010.png?v=20260908b', 10),
+            BackRun: makeHumanStripTexture('assets/character/character%20switch%202d/back%20pose%20RUN%2010.png?v=20260908b', 10),
+            SideRun: makeHumanStripTexture('assets/character/character%20switch%202d/side%20run%20ch%209.png?v=20260908b', 9)
+        };
+        const humanFormMaterial = new THREE.MeshBasicMaterial({
+            map: humanFormStrips.Idle.texture,
+            transparent: true,
+            alphaTest: 0.08,
+            depthWrite: false,
+            depthTest: false,
+            side: THREE.DoubleSide
+        });
+        humanFormRoot = new THREE.Mesh(new THREE.PlaneGeometry(humanFormSpriteWidth, humanFormSpriteHeight), humanFormMaterial);
+        humanFormRoot.name = 'HumanForm2DSprite';
+        humanFormRoot.renderOrder = 12;
+        humanFormRoot.visible = false;
+        humanFormRoot.position.set(0, 0.94, 0);
+        characterGroup.add(humanFormRoot);
+
+        const setHumanFormStrip = (name) => {
+            const strip = humanFormStrips[name] || humanFormStrips.Idle;
+            if (humanFormActionName !== name) {
+                humanFormActionName = name;
+                humanFormAnimTime = 0;
+                humanFormMaterial.map = strip.texture;
+                humanFormMaterial.needsUpdate = true;
+            }
+            return strip;
+        };
 
         const playHumanFormAction = (name) => {
-            if (!humanFormActions[name] || humanFormActionName === name) return;
-            const nextAction = humanFormActions[name];
-            nextAction.reset().play();
-            if (humanFormActions[humanFormActionName]) {
-                humanFormActions[humanFormActionName].fadeOut(0.16);
-                nextAction.fadeIn(0.16);
-            }
-            humanFormActionName = name;
+            setHumanFormStrip(name);
         };
 
         const activateHumanForm = () => {
@@ -657,34 +1010,6 @@
             }
         };
 
-        if (THREE.GLTFLoader) {
-            const humanLoader = new THREE.GLTFLoader();
-            humanLoader.load('assets/character/3d/human_form.glb?v=20260905c', (gltf) => {
-                humanFormRoot = gltf.scene;
-                humanFormRoot.name = 'HumanForm3D';
-                humanFormRoot.visible = false;
-                humanFormRoot.position.set(0, 0, 0);
-                humanFormRoot.scale.setScalar(1.0);
-                humanFormRoot.traverse((node) => {
-                    if (node.isMesh) {
-                        node.frustumCulled = false;
-                        node.castShadow = false;
-                        node.receiveShadow = false;
-                    }
-                });
-                characterGroup.add(humanFormRoot);
-
-                humanFormMixer = new THREE.AnimationMixer(humanFormRoot);
-                gltf.animations.forEach((clip) => {
-                    const clipKey = clip.name.toLowerCase().includes('walk') ? 'Walk' : (clip.name.toLowerCase().includes('jump') ? 'Jump' : 'Idle');
-                    const action = humanFormMixer.clipAction(clip);
-                    action.enabled = true;
-                    action.setLoop(THREE.LoopRepeat);
-                    humanFormActions[clipKey] = action;
-                });
-                if (humanFormUnlocked) activateHumanForm();
-            });
-        }
         scene.add(characterGroup);
 
         const sleepingTexture = new THREE.TextureLoader().load('assets/character/sleep character.png?v=20260903a');
@@ -775,7 +1100,7 @@
         baseGroundTexture.minFilter = THREE.LinearFilter;
         baseGroundTexture.wrapS = THREE.RepeatWrapping;
         baseGroundTexture.wrapT = THREE.RepeatWrapping;
-        const room2BaseTexture = new THREE.TextureLoader().load('assets/environment/Home%20lobby%20asset%20and%20texture/room%202%20base%20texture.jpg?v=20260904a');
+        const room2BaseTexture = new THREE.TextureLoader().load('assets/environment/Home%20lobby%20asset%20and%20texture/room%202%20base%20texture.jpg?v=20260908a');
         room2BaseTexture.minFilter = THREE.LinearFilter;
         room2BaseTexture.magFilter = THREE.LinearFilter;
         room2BaseTexture.wrapS = THREE.ClampToEdgeWrapping;
@@ -785,14 +1110,20 @@
         sofaTexture.magFilter = THREE.LinearFilter;
         sofaTexture.wrapS = THREE.ClampToEdgeWrapping;
         sofaTexture.wrapT = THREE.ClampToEdgeWrapping;
-        const exitDoorMatTexture = makeUiTexture('assets/environment/Home%20lobby%20asset%20and%20texture/exit%20door%20mat.png?v=20260904a');
+        const exitDoorMatTexture = makeUiTexture('assets/environment/Home%20lobby%20asset%20and%20texture/exit%20door%20mat.png?v=20260908a');
         const grannyDoorMatTexture = makeUiTexture('assets/environment/Home%20lobby%20asset%20and%20texture/grandma%20dppr%20mat.png?v=20260904a');
         const plantTexture = makeUiTexture('assets/environment/Home%20lobby%20asset%20and%20texture/plant%201.png?v=20260904a');
         const plantAltTexture = makeUiTexture('assets/environment/Home%20lobby%20asset%20and%20texture/plant%202.png?v=20260904a');
         const shelfTexture = makeUiTexture('assets/environment/Home%20lobby%20asset%20and%20texture/shelf.png?v=20260904a');
         const shopM1Texture = makeUiTexture('assets/environment/shop%20scene%20texture/m1.jpg?v=20260904b');
-        const shopM2Texture = makeUiTexture('assets/environment/shop%20scene%20texture/m2.jpg?v=20260904b');
+        const shopM2Texture = makeUiTexture('assets/environment/shop%20scene%20texture/m2.jpg?v=20260908b');
+        const shopTarotTentTexture = makeUiTexture('assets/environment/shop%20scene%20texture/taort%20tent.png?v=20260908a');
         const shopM3Texture = makeUiTexture('assets/environment/shop%20scene%20texture/m3.png?v=20260904e');
+        const shopTreeMaterials = [1, 2, 3, 4].map((variant) => new THREE.MeshBasicMaterial({
+            map: makeUiTexture('assets/environment/shop%20scene%20texture/t' + variant + '.png?v=20260908a'),
+            alphaTest: 0.05,
+            side: THREE.DoubleSide
+        }));
         const circusBaseTexture = makeUiTexture('assets/environment/Circus%20scene%20textures/base%20texture%20m5.jpg?v=20260905a');
         const circusWheelTexture = makeUiTexture('assets/environment/Circus%20scene%20textures/circus%20wheel%20m1.png?v=20260905a');
         const circusPropsTexture = makeUiTexture('assets/environment/Circus%20scene%20textures/props%20m2.png?v=20260905a');
@@ -800,8 +1131,12 @@
         const circusPopcornTexture = makeUiTexture('assets/environment/Circus%20scene%20textures/popcorn.png?v=20260905a');
         const circusTentInteriorTexture = makeUiTexture('assets/environment/Circus%20scene%20textures/circus%20tent/inside%20circus%20tent%20m1.jpg?v=20260907a');
         const circusTentInteriorPropTexture = makeUiTexture('assets/environment/Circus%20scene%20textures/circus%20tent/inside%20circus%20tent%20m2.jpg?v=20260907a');
+        const circusOwnerTexture = makeUiTexture('assets/environment/Circus%20scene%20textures/circus%20tent/circus%20owner%20m5.png?v=20260908a');
+        const circusOwnerBannerTexture = makeUiTexture('assets/environment/Circus%20scene%20textures/take%20thhis%20stone%20m7.png?v=20260908a');
 
         const layoutMaterials = {
+            CircusOwner: new THREE.MeshBasicMaterial({ map: circusOwnerTexture, transparent: true, alphaTest: 0.05, side: THREE.DoubleSide }),
+            CircusOwnerBanner: new THREE.MeshBasicMaterial({ map: circusOwnerBannerTexture, transparent: true, alphaTest: 0.05, side: THREE.DoubleSide }),
             Ground: new THREE.MeshBasicMaterial({ color: 0x26352d, side: THREE.DoubleSide }),
             BaseCircle: new THREE.MeshBasicMaterial({ color: 0x55aaff, side: THREE.DoubleSide }),
             CandleMarker: new THREE.MeshBasicMaterial({ color: 0xffbd40, side: THREE.DoubleSide }),
@@ -820,6 +1155,7 @@
             ShopSand: new THREE.MeshBasicMaterial({ color: 0xb88f64, side: THREE.DoubleSide }),
             ShopM1: new THREE.MeshBasicMaterial({ map: shopM1Texture, side: THREE.DoubleSide }),
             ShopM2: new THREE.MeshBasicMaterial({ map: shopM2Texture, side: THREE.DoubleSide }),
+            ShopTarotTent: new THREE.MeshBasicMaterial({ map: shopTarotTentTexture, transparent: true, alphaTest: 0.05, side: THREE.DoubleSide }),
             ShopM3: new THREE.MeshBasicMaterial({ map: shopM3Texture, transparent: true, alphaTest: 0.05, depthWrite: false, side: THREE.DoubleSide }),
             CircusBase: new THREE.MeshBasicMaterial({ map: circusBaseTexture, side: THREE.DoubleSide }),
             CircusWheel: new THREE.MeshBasicMaterial({ map: circusWheelTexture, transparent: true, alphaTest: 0.05, depthWrite: false, side: THREE.DoubleSide }),
@@ -862,7 +1198,11 @@
             center: new THREE.Vector3(-4.856, 0, 3.806),
             focus: new THREE.Vector3(-4.856, 0, 3.55),
             triggerRadius: 1.45,
-            price: 10,
+            price: 0,
+            stage: 'closed',
+            dialogueSeen: false,
+            dialogueIndex: 0,
+            dialogueTimer: 0,
             purchased: false,
             panelOpen: false,
             focusing: false,
@@ -881,13 +1221,17 @@
             lastCollectibleSpot: -1,
             warningTime: 0.72,
             owner: null,
+            ownerDeparted: false,
+            storyStep: 0,
+            storyTimer: 0,
             collectibles: [],
             obstacles: [],
             arrows: [],
             obstaclePrototype: null,
             messageTimer: 0,
             hitCooldown: 0,
-            message: 'Collect the circus charms'
+            message: 'Collect the circus charms',
+            dayPartSpent: false
         };
         let tentJumpTimer = 0;
         let tentJumpCooldown = 0;
@@ -1048,6 +1392,13 @@
             const materialName = objectData.material;
             const materialKey = (materialName || '').toLowerCase();
 
+            if (sceneStyle === 'shop' && /^(trees?|tees)(\.\d+)?$/.test(name)) {
+                // Stable variation preserves each tree's appearance across scene reloads.
+                let hash = 2166136261;
+                for (let i = 0; i < name.length; i++) hash = Math.imul(hash ^ name.charCodeAt(i), 16777619);
+                return shopTreeMaterials[(hash >>> 16) % shopTreeMaterials.length];
+            }
+
             if (name.includes('exit_door_mat')) return layoutMaterials.ExitDoorMat;
             if (name.includes('granny_door_mat')) return layoutMaterials.GrannyDoorMat;
             if (name.includes('plants_position_.001')) return layoutMaterials.PlantAlt;
@@ -1056,16 +1407,19 @@
             if (name === 'sofa') return layoutMaterials.Sofa;
             if (name.includes('room2_base')) return layoutMaterials.Room2Base;
             if (name.includes('base_ground') || name.includes('base_underground') || name.includes('basement_ritual_ground') || name.includes('basefbxasc032offbxasc032house')) return layoutMaterials.BaseGround;
+            if (sceneStyle === 'shop' && name === 'tarot_tent') return layoutMaterials.ShopTarotTent;
             if (sceneStyle === 'shop' && (name.includes('_m1') || materialKey.includes('lambert4'))) return layoutMaterials.ShopM1;
             if (sceneStyle === 'shop' && (name.includes('_m2') || materialKey.includes('lambert5'))) return layoutMaterials.ShopM2;
             if (sceneStyle === 'shop' && (name.includes('_m3') || name.includes('-m3') || materialKey.includes('lambert7'))) return layoutMaterials.ShopM3;
             if (sceneStyle === 'shop' && (name === 'base' || name === 'base2' || name.includes('shop_beach'))) return layoutMaterials.ShopSand;
             if (sceneStyle === 'circusTent') {
+                if (name.includes('circus_owner')) return layoutMaterials.CircusOwner;
                 if (name.includes('_m1') || name.includes('entry_poing') || name.includes('base_platform_where_user_move')) return layoutMaterials.CircusTentInteriorFloor;
                 if (name.includes('arcade_game_obstacle') || name.includes('_m2') || name.includes('staff') || materialKey.includes('lambert4')) return layoutMaterials.CircusTentInteriorProp;
                 return layoutMaterials.CircusTentInteriorFloor;
             }
             if (sceneStyle === 'circus') {
+                if (name.includes('banner_of_owner') || name.includes('m7')) return layoutMaterials.CircusOwnerBanner;
                 if (name.includes('popcorn') || materialKey === 'material.009') return layoutMaterials.CircusPopcorn;
                 if (name.includes('tent') || name.includes('m3') || materialKey === 'material') return layoutMaterials.CircusTent;
                 if (name.includes('m1') || name.includes('trolly') || materialKey === 'material.001') return layoutMaterials.CircusWheel;
@@ -1180,6 +1534,11 @@
 
             objects.forEach((objectData) => {
                 const objectName = objectData.name.toLowerCase();
+                if (sceneStyle === 'shop' && objectName.includes('soul_platform_-m3') && objectData.faces.length > 0) {
+                    const box = new THREE.Box3().setFromPoints(objectData.faces.map((index) => vertices[index]));
+                    shopStarterCard.center.set((box.min.x + box.max.x) / 2, 0, (box.min.z + box.max.z) / 2);
+                    shopStarterCard.focus.set(shopStarterCard.center.x, 0, shopStarterCard.center.z - 0.26);
+                }
                 if (objectName.includes('area_wher_user_can_move') || (sceneStyle === 'circus' && objectName.includes('user_walking_space')) || (sceneStyle === 'circusTent' && objectName.includes('base_platform_where_user_move'))) {
                     const triangles = [];
                     for (let i = 0; i < objectData.faces.length; i += 3) {
@@ -1263,8 +1622,9 @@
                     const material = getLayoutMaterial(objectData, false, sceneStyle);
                     const mesh = new THREE.Mesh(geometry, material);
                     mesh.name = objectData.name;
-                    if (sceneStyle === 'circusTent' && objectName.includes('staff_stahd')) {
+                    if (sceneStyle === 'circusTent' && (objectName.includes('staff_stahd') || objectName.includes('circus_owner'))) {
                         tentTrial.owner = mesh;
+                        mesh.visible = !tentTrial.ownerDeparted;
                         mesh.userData.trialHome = mesh.position.clone();
                     }
                     if (sceneStyle === 'shop' && objectName.includes('soul_platform_-m3')) {
@@ -1471,27 +1831,63 @@
                 lobbyReady = true;
             });
 
-        fetch('assets/environment/shop%20beach%20scene.obj?v=20260905a')
+        fetch('assets/environment/shop%20beach%20scene.obj?v=20260908c')
             .then((response) => {
                 if (!response.ok) throw new Error('Could not load shop beach scene.obj');
                 return response.text();
             })
             .then((objText) => {
                 addObjLayoutToScene(objText, shopGroup, 'shop');
+                const bounds = getObjBoundsByName(objText);
+                const config = areaConfigs.shop;
+                const walkingArea = bounds['area_wher_user_can_move_hide_'];
+                const spawn = bounds['player_spown_area_from_map_(disable_mesh)'];
+                const mapExit = bounds['go_to_map_(disable_'];
+                if (walkingArea) Object.assign(config.bounds, walkingArea);
+                if (spawn) {
+                    config.spawn.x = (spawn.minX + spawn.maxX) / 2;
+                    config.spawn.z = (spawn.minZ + spawn.maxZ) / 2;
+                }
+                if (mapExit) {
+                    Object.assign(config.mapCollider, mapExit);
+                    const marker = shopGroup.getObjectByName('Shop_To_Map_Marker');
+                    if (marker) marker.position.set((mapExit.minX + mapExit.maxX) / 2, 0.85, (mapExit.minZ + mapExit.maxZ) / 2);
+                }
                 shopReady = true;
             });
 
 
-        fetch('assets/environment/Circus%20scene%20textures/circus%20enviornment.obj?v=20260906a')
+        fetch('assets/environment/Circus%20scene%20textures/circus%20enviornment.obj?v=20260908a')
             .then((response) => {
                 if (!response.ok) throw new Error('Could not load circus enviornment.obj');
                 return response.text();
             })
             .then((objText) => {
                 addObjLayoutToScene(objText, circusGroup, 'circus');
+                const bounds = getObjBoundsByName(objText);
+                const config = areaConfigs.circus;
+                const spawn = bounds['player_spown_area_from_map_(disable_mesh)'];
+                const walkingArea = bounds['user_walking_space-m5'];
+                const mapExit = bounds['go_to_map_(disable_'];
+                const tentEntry = bounds['collider_for_inside_circus_scene_(disable)'];
+                if (walkingArea) Object.assign(config.bounds, walkingArea);
+                if (spawn) {
+                    config.spawn.x = (spawn.minX + spawn.maxX) / 2;
+                    config.spawn.z = (spawn.minZ + spawn.maxZ) / 2;
+                }
+                if (mapExit) Object.assign(config.mapCollider, mapExit);
+                if (tentEntry) {
+                    Object.assign(config.tentCollider, tentEntry);
+                    config.tentReturnSpawn.x = (tentEntry.minX + tentEntry.maxX) / 2;
+                    config.tentReturnSpawn.z = tentEntry.maxZ + 0.75;
+                }
+                for (const [name, rect] of [['Circus_To_Map_Marker', config.mapCollider], ['Circus_To_Tent_Marker', config.tentCollider]]) {
+                    const marker = circusGroup.getObjectByName(name);
+                    if (marker) marker.position.set((rect.minX + rect.maxX) / 2, 0.85, (rect.minZ + rect.maxZ) / 2);
+                }
                 circusReady = true;
             });
-        fetch('assets/environment/inside%20circus%20tent%20scene.obj?v=20260907e')
+        fetch('assets/environment/inside%20circus%20tent%20scene.obj?v=20260908a')
             .then((response) => {
                 if (!response.ok) throw new Error('Could not load inside circus tent scene.obj');
                 return response.text();
@@ -1536,6 +1932,29 @@
                 exitCollider: { minX: -1.0, maxX: 1.0, minZ: 6.12, maxZ: 6.637 }
             }
         };
+
+        const transitionMarkerMaterials = {
+            enter: new THREE.SpriteMaterial({ map: makeUiTexture('assets/environment/enter.png?v=20260908a'), depthTest: false, depthWrite: false }),
+            exit: new THREE.SpriteMaterial({ map: makeUiTexture('assets/environment/exit.png?v=20260908a'), depthTest: false, depthWrite: false })
+        };
+        const transitionMarkers = [
+            { group: basementGroup, rect: areaConfigs.basement.nextAreaCollider, kind: 'exit', name: 'Basement_To_Lobby' },
+            { group: lobbyGroup, rect: areaConfigs.lobby.basementCollider, kind: 'enter', name: 'Lobby_To_Basement' },
+            { group: lobbyGroup, rect: areaConfigs.lobby.mapCollider, kind: 'exit', name: 'Lobby_To_Map' },
+            { group: shopGroup, rect: areaConfigs.shop.mapCollider, kind: 'exit', name: 'Shop_To_Map' },
+            { group: circusGroup, rect: areaConfigs.circus.mapCollider, kind: 'exit', name: 'Circus_To_Map' },
+            { group: circusGroup, rect: areaConfigs.circus.tentCollider, kind: 'enter', name: 'Circus_To_Tent' },
+            { group: circusTentGroup, rect: areaConfigs.circusTent.exitCollider, kind: 'exit', name: 'Tent_To_Circus' }
+        ].map(({ group, rect, kind, name }) => {
+            const marker = new THREE.Sprite(transitionMarkerMaterials[kind]);
+            marker.name = name + '_Marker';
+            marker.visible = false;
+            marker.position.set((rect.minX + rect.maxX) / 2, 0.85, (rect.minZ + rect.maxZ) / 2);
+            marker.scale.set(1.8, 0.9, 1);
+            marker.renderOrder = 18;
+            group.add(marker);
+            return marker;
+        });
 
         const isPointInsideRect = (point, rect) => (
             point.x >= rect.minX &&
@@ -1592,13 +2011,16 @@
 
             sleepingBody.visible = areaName === 'basement';
             eyeGlowBody.visible = areaName === 'basement';
-            baseHealthDisplay.style.display = areaName === 'basement' ? 'block' : 'none';
+            connectionHud.hidden = areaName !== 'basement';
             scene.background = createBackgroundTexture(areaName);
             sceneVignette.classList.toggle('ritual-active', areaName === 'basement');
-            dashBtn.textContent = areaName === 'circusTent' ? 'JUMP' : 'DASH';
-            dashBtn.style.display = 'flex';
+            dashBtn.textContent = 'DASH';
+            dashBtn.style.display = 'none';
             slashBtn.textContent = 'SLASH';
             slashBtn.style.display = areaName === 'circusTent' ? 'none' : 'flex';
+            cinematicBtn.textContent = 'JUMP';
+            cinematicBtn.style.display = humanFormUnlocked && areaName !== 'basement' && gameTime.phase !== 'night' ? 'flex' : 'none';
+            cinematicBtn.classList.remove('active');
 
             if (areaName !== 'basement') {
                 clearEnemies();
@@ -1615,8 +2037,41 @@
 
 
         const tentTrialHud = document.getElementById('tent-trial-hud');
+        const tentBriefing = document.getElementById('tent-briefing');
+        const circusStoryScreen = document.getElementById('circus-story-screen');
+        const circusStoryMasks = Array.from(document.querySelectorAll('.circus-story-mask'));
+        const startTentGameplay = () => {
+            tentTrial.state = 'play';
+            tentTrial.message = 'Survive until a stone part appears';
+            tentTrial.nextCollectibleTimer = getTentCollectibleRevealDelay();
+            tentTrial.nextObstacleTimer = tentTrialStages[0].delay;
+            tentBriefing.hidden = true;
+            document.body.classList.remove('tent-briefing');
+            updateTentTrialHud();
+        };
+        const advanceCircusStory = () => {
+            if (tentTrial.state !== 'story' || tentTrial.storyStep >= circusStoryMasks.length || isTransitioning) return;
+            tentTrial.storyTimer = 0;
+            tentTrial.storyStep++;
+            if (tentTrial.storyStep < circusStoryMasks.length) {
+                circusStoryMasks[tentTrial.storyStep].classList.add('revealed');
+            } else circusStoryScreen.classList.add('ending');
+        };
+        circusStoryScreen.addEventListener('click', advanceCircusStory);
+        circusStoryScreen.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                advanceCircusStory();
+            }
+        });
+        document.getElementById('tent-briefing-start').addEventListener('click', () => {
+            if (activeArea !== 'circusTent' || tentTrial.state !== 'briefing' || isTransitioning) return;
+            startTentGameplay();
+        });
         const tentTrialTitle = document.getElementById('tent-trial-title');
         const tentTrialStatus = document.getElementById('tent-trial-status');
+        const tentTrialInstruction = document.getElementById('tent-trial-instruction');
+        const tentStonePartGoal = 4;
         const tentCollectiblePositions = [
             new THREE.Vector3(-2.85, 0.5, -2.75),
             new THREE.Vector3(2.85, 0.5, -2.55),
@@ -1633,8 +2088,7 @@
             { dirs: ['front'], speed: 3.25, delay: 1.7 },
             { dirs: ['front', 'left'], speed: 3.75, delay: 1.4 },
             { dirs: ['front', 'left', 'right', 'back'], speed: 4.0, delay: 1.2 },
-            { dirs: ['front', 'left', 'right', 'back'], speed: 4.0, delay: 1.2 },
-            { dirs: ['front', 'left', 'right', 'back'], speed: 4.0, delay: 1.2, burstChance: 0.28 }
+            { dirs: ['front', 'left', 'right', 'back'], speed: 4.0, delay: 1.2 }
         ];
         const tentDirections = {
             front: { x: 0, z: 1, start: { x: 0, z: -7.0 }, arrow: { x: 0, z: -5.75, r: Math.PI } },
@@ -1644,12 +2098,13 @@
         };
 
         const updateTentTrialHud = () => {
-            const show = activeArea === 'circusTent' && tentTrial.state !== 'idle';
+            const show = activeArea === 'circusTent' && ['play', 'complete', 'failed'].includes(tentTrial.state);
             tentTrialHud.classList.toggle('active', show);
             tentTrialHud.setAttribute('aria-hidden', show ? 'false' : 'true');
             if (!show) return;
             tentTrialTitle.textContent = tentTrial.state === 'complete' ? 'Circus Trial Clear' : (tentTrial.state === 'failed' ? 'Trial Failed' : 'Circus Trial');
-            tentTrialStatus.textContent = tentTrial.message + '  ' + Math.min(5, tentTrial.activeCollectible) + '/5';
+            tentTrialInstruction.style.display = tentTrial.state === 'intro' || tentTrial.state === 'play' ? 'block' : 'none';
+            tentTrialStatus.textContent = tentTrial.message + '  ' + Math.min(tentStonePartGoal, tentTrial.activeCollectible) + '/' + tentStonePartGoal;
         };
 
         const clearTentTrialRuntime = () => {
@@ -1660,7 +2115,7 @@
         };
 
         const ensureTentTrialAssets = () => {
-            while (tentTrial.collectibles.length < 5) {
+            while (tentTrial.collectibles.length < tentStonePartGoal) {
                 const index = tentTrial.collectibles.length;
                 const mesh = new THREE.Mesh(
                     new THREE.PlaneGeometry(0.78, 0.78),
@@ -1701,26 +2156,35 @@
         const beginTentTrial = () => {
             ensureTentTrialAssets();
             clearTentTrialRuntime();
-            tentTrial.state = tentTrial.completed ? 'complete' : 'intro';
+            tentTrial.completed = false;
+            tentTrial.dayPartSpent = spendDayPart('circus');
+            tentTrial.state = tentTrial.ownerDeparted ? 'play' : 'story';
             tentTrial.introTimer = 1.35;
+            tentTrial.storyStep = 0;
+            tentTrial.storyTimer = 0;
+            tentBriefing.hidden = true;
+            circusStoryScreen.hidden = tentTrial.ownerDeparted;
+            circusStoryScreen.classList.remove('ending');
+            circusStoryMasks.forEach((mask, index) => mask.classList.toggle('revealed', index === 0));
+            if (!tentTrial.ownerDeparted) circusStoryScreen.focus({ preventScroll: true });
+            document.body.classList.toggle('tent-briefing', !tentTrial.ownerDeparted);
+            moveData.forward = 0;
+            moveData.turn = 0;
             tentTrial.activeCollectible = 0;
             tentTrial.hits = 0;
             tentTrial.nextObstacleTimer = 0.35;
             tentTrial.nextCollectibleTimer = 0;
             tentTrial.lastCollectibleSpot = -1;
             tentTrial.hitCooldown = 0;
-            tentTrial.message = tentTrial.completed ? 'Exit is open' : 'Watch the arrows';
+            tentTrial.message = 'Watch the arrows';
             if (tentTrial.owner) {
-                tentTrial.owner.visible = !tentTrial.completed;
+                tentTrial.owner.visible = !tentTrial.ownerDeparted;
                 const ownerHome = tentTrial.owner.userData.trialHome || new THREE.Vector3(0, 0, 0.35);
                 tentTrial.owner.position.copy(ownerHome);
                 tentTrial.owner.userData.trialIntroStart = ownerHome.clone();
             }
-            if (tentTrial.completed) {
-                tentTrial.collectibles.forEach((mesh) => { mesh.visible = false; });
-            } else {
-                tentTrial.collectibles.forEach((mesh) => { mesh.visible = false; });
-            }
+            tentTrial.collectibles.forEach((mesh) => { mesh.visible = false; });
+            if (tentTrial.ownerDeparted) startTentGameplay();
             updateTentTrialHud();
         };
 
@@ -1786,8 +2250,9 @@
             if (tentTrial.state !== 'play') return;
             obstacle.hit = true;
             tentTrial.state = 'failed';
-            tentTrial.message = 'Hit by the bar';
-            tentTrial.nextObstacleTimer = 1.15;
+            tentTrial.completed = true;
+            tentTrial.message = 'Trial failed - exit is open';
+            tentTrial.nextObstacleTimer = 0;
             tentTrial.collectibles.forEach((mesh) => { mesh.visible = false; });
             clearTentTrialRuntime();
             triggerScreenShake(0.34, 0.22);
@@ -1796,30 +2261,50 @@
         };
 
         const updateTentTrial = (dt) => {
+            tentJumpCooldown = Math.max(0, tentJumpCooldown - dt);
+            tentJumpTimer = Math.max(0, tentJumpTimer - dt);
+            if (!humanFormUnlocked || activeArea === 'basement' || gameTime.phase === 'night') tentJumpTimer = 0;
             if (activeArea !== 'circusTent') return;
             ensureTentTrialAssets();
-            tentJumpCooldown = Math.max(0, tentJumpCooldown - dt);
             tentTrial.hitCooldown = Math.max(0, tentTrial.hitCooldown - dt);
-            tentJumpTimer = Math.max(0, tentJumpTimer - dt);
             const jumpProgress = tentJumpTimer > 0 ? 1 - tentJumpTimer / tentJumpDuration : 1;
-            const jumpHeight = tentJumpTimer > 0 ? Math.sin(jumpProgress * Math.PI) * 1.08 : 0;
+            const jumpHeight = tentJumpTimer > 0 ? Math.sin(jumpProgress * Math.PI) * 1.15 : 0;
+
+            if (tentTrial.state === 'story') {
+                if (isTransitioning) return;
+                tentTrial.storyTimer += dt;
+                if (tentTrial.storyStep < circusStoryMasks.length) {
+                    if (tentTrial.storyTimer >= 5) advanceCircusStory();
+                } else if (tentTrial.storyTimer >= 0.65) {
+                    circusStoryScreen.hidden = true;
+                    circusStoryScreen.blur();
+                    tentTrial.state = 'intro';
+                    tentTrial.introTimer = 1.35;
+                }
+                return;
+            }
+            if (tentTrial.state === 'briefing') {
+                updateTentTrialHud();
+                return;
+            }
 
             if (tentTrial.state === 'intro') {
                 tentTrial.introTimer = Math.max(0, tentTrial.introTimer - dt);
                 tentTrial.message = 'The ringmaster steps aside';
-                if (tentTrial.owner) {
+                if (tentTrial.owner && !tentTrial.ownerDeparted) {
                     const progress = 1 - tentTrial.introTimer / 1.35;
                     const ownerStart = tentTrial.owner.userData.trialIntroStart || tentTrial.owner.position;
-                    tentTrial.owner.position.x = ownerStart.x + 9.0 * progress;
+                    const ease = progress * progress * (3 - 2 * progress);
+                    tentTrial.owner.position.x = ownerStart.x + 9.0 * ease;
                     tentTrial.owner.position.z = ownerStart.z;
                     tentTrial.owner.scale.setScalar(1);
                     if (progress >= 1) tentTrial.owner.visible = false;
                 }
                 if (tentTrial.introTimer <= 0) {
-                    tentTrial.state = 'play';
-                    tentTrial.message = 'Survive until the charm appears';
-                    tentTrial.nextCollectibleTimer = getTentCollectibleRevealDelay();
-                    tentTrial.nextObstacleTimer = tentTrialStages[0].delay;
+                    tentTrial.ownerDeparted = true;
+                    tentTrial.state = 'briefing';
+                    tentBriefing.hidden = false;
+                    document.getElementById('tent-briefing-start').focus({ preventScroll: true });
                 }
                 updateTentTrialHud();
                 return;
@@ -1846,13 +2331,7 @@
             });
 
             if (tentTrial.state === 'failed') {
-                tentTrial.nextObstacleTimer = Math.max(0, tentTrial.nextObstacleTimer - dt);
-                if (tentTrial.nextObstacleTimer <= 0) {
-                    tentTrial.completed = false;
-                    beginTentTrial();
-                }
                 updateTentTrialHud();
-
                 return;
             }
 
@@ -1865,7 +2344,7 @@
                 tentTrial.nextCollectibleTimer = Math.max(0, tentTrial.nextCollectibleTimer - dt);
                 if (tentTrial.nextCollectibleTimer <= 0) {
                     showTentCollectible(tentTrial.activeCollectible);
-                    tentTrial.message = 'Find the next circus charm';
+                    tentTrial.message = 'Find the next stone part';
                 }
             }
 
@@ -1877,15 +2356,15 @@
                     activeCollectible.visible = false;
                     tentTrial.activeCollectible++;
                     triggerScreenShake(0.14, 0.1);
-                    if (tentTrial.activeCollectible >= 5) {
+                    if (tentTrial.activeCollectible >= tentStonePartGoal) {
                         tentTrial.completed = true;
                         tentTrial.state = 'complete';
-                        tentTrial.message = 'Trial complete';
+                        tentTrial.message = 'Trial complete - exit is open';
                         clearTentTrialRuntime();
                         playWaveGesture('Circus Trial Clear');
                     } else {
                         tentTrial.nextCollectibleTimer = getTentCollectibleRevealDelay();
-                        tentTrial.message = 'Charm ' + tentTrial.activeCollectible + ' collected';
+                        tentTrial.message = 'Stone part ' + tentTrial.activeCollectible + ' collected';
                         const nextStage = tentTrialStages[Math.min(tentTrial.activeCollectible, tentTrialStages.length - 1)];
                         tentTrial.nextObstacleTimer = nextStage.delay;
                     }
@@ -1921,14 +2400,140 @@
         };
 
         const getTentJumpHeight = () => {
-            if (activeArea !== 'circusTent' || tentJumpTimer <= 0) return 0;
+            if (!humanFormUnlocked || activeArea === 'basement' || gameTime.phase === 'night' || tentJumpTimer <= 0) return 0;
             const progress = 1 - tentJumpTimer / tentJumpDuration;
-            return Math.sin(progress * Math.PI) * 0.92;
+            return Math.sin(progress * Math.PI) * 1.0;
         };
         const mapOverlay = document.getElementById('map-overlay');
         const mapImage = document.getElementById('map-image');
         const mapFrame = document.getElementById('map-frame');
         const mapClose = document.getElementById('map-close');
+        const storyIntroOverlay = document.getElementById('story-intro-overlay');
+        const gameOpeningIcon = document.getElementById('game-opening-icon');
+        const gameMusic = document.getElementById('game-music');
+        gameMusic.volume = 0.25;
+        let musicUnlocked = false;
+        const startGameMusic = () => {
+            if (document.hidden || !gameMusic.paused) return;
+            gameMusic.play().then(() => { musicUnlocked = true; }).catch(() => {});
+        };
+        // Browsers may require a user gesture before the first audio playback.
+        document.addEventListener('pointerdown', startGameMusic, { capture: true });
+        document.addEventListener('touchstart', startGameMusic, { capture: true, passive: true });
+        document.addEventListener('keydown', startGameMusic, { capture: true });
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) gameMusic.pause();
+            else if (musicUnlocked) startGameMusic();
+        });
+        startGameMusic();
+        const storyIntroSlates = Array.from(document.querySelectorAll('.story-intro-slate'));
+        const storyIntroDialogueLine = document.getElementById('story-intro-dialogue-line');
+        const storyIntroDialogue = [
+            '"Are you still there?"',
+            '"I know you can hear me..."',
+            '"Your soul is still connected."',
+            '"Protect it."'
+        ];
+        let isStoryIntroActive = !!storyIntroOverlay;
+        let storyIntroMode = 'splash';
+        let storyIntroIndex = 0;
+        let storyIntroTimer = 0;
+        let storyIntroChanging = false;
+        let storyDialogueIndex = 0;
+        const storyIntroDuration = 5.0;
+        const storyDialogueDuration = 2.35;
+        const finishStoryIntro = () => {
+            if (!isStoryIntroActive || storyIntroChanging) return;
+            storyIntroChanging = true;
+            storyIntroOverlay.classList.add('ending');
+            storyIntroOverlay.setAttribute('aria-hidden', 'true');
+            setTimeout(() => {
+                storyIntroOverlay.classList.add('hidden');
+                isStoryIntroActive = false;
+                storyIntroChanging = false;
+                introTimer = 0;
+                setFade(true);
+                clock.getDelta();
+            }, 620);
+        };
+        const showStoryDialogueLine = () => {
+            if (!storyIntroDialogueLine) return;
+            storyIntroDialogueLine.classList.add('fading');
+            setTimeout(() => {
+                storyIntroDialogueLine.textContent = storyIntroDialogue[storyDialogueIndex] || '';
+                storyIntroDialogueLine.classList.remove('fading');
+            }, 120);
+        };
+        const startStoryDialogue = () => {
+            if (!isStoryIntroActive) return;
+            storyIntroMode = 'dialogue';
+            storyIntroChanging = false;
+            storyIntroTimer = 0;
+            storyDialogueIndex = 0;
+            storyIntroOverlay.classList.add('dialogue');
+            showStoryDialogueLine();
+        };
+        const advanceStoryDialogue = () => {
+            if (storyIntroChanging) return;
+            if (storyDialogueIndex >= storyIntroDialogue.length - 1) {
+                finishStoryIntro();
+                return;
+            }
+            storyDialogueIndex++;
+            storyIntroTimer = 0;
+            showStoryDialogueLine();
+        };
+        const advanceStoryIntro = () => {
+            if (!isStoryIntroActive || storyIntroChanging) return;
+            if (storyIntroMode === 'splash') return;
+            if (storyIntroMode === 'dialogue') {
+                advanceStoryDialogue();
+                return;
+            }
+            if (storyIntroIndex >= storyIntroSlates.length) {
+                storyIntroChanging = true;
+                setTimeout(startStoryDialogue, 1400);
+                return;
+            }
+            storyIntroChanging = true;
+            storyIntroTimer = 0;
+            storyIntroSlates[storyIntroIndex].classList.add('revealed');
+            setTimeout(() => {
+                storyIntroIndex++;
+                if (storyIntroIndex >= storyIntroSlates.length) {
+                    setTimeout(startStoryDialogue, 1400);
+                } else {
+                    storyIntroChanging = false;
+                }
+            }, 520);
+        };
+        const updateStoryIntro = (dt) => {
+            if (!isStoryIntroActive || storyIntroChanging) return;
+            if (storyIntroMode === 'splash') {
+                if (!gameOpeningIcon.complete) return;
+                storyIntroTimer += dt;
+                const t = storyIntroTimer;
+                const opacity = Math.max(0, Math.min(1, (t - 0.3) / 1.2, (4.7 - t) / 1.2));
+                gameOpeningIcon.style.opacity = String(opacity * opacity * (3 - 2 * opacity));
+                if (t >= 5.0) {
+                    storyIntroMode = 'slates';
+                    storyIntroTimer = 0;
+                    storyIntroOverlay.classList.remove('splash');
+                }
+                return;
+            }
+            storyIntroTimer += dt;
+            const duration = storyIntroMode === 'dialogue' ? storyDialogueDuration : storyIntroDuration;
+            if (storyIntroTimer >= duration) advanceStoryIntro();
+        };
+        storyIntroOverlay.addEventListener('touchstart', (event) => {
+            event.preventDefault();
+            advanceStoryIntro();
+        }, { passive: false });
+        storyIntroOverlay.addEventListener('mousedown', (event) => {
+            event.preventDefault();
+            advanceStoryIntro();
+        });
         const fadeOverlay = document.getElementById('fade-overlay');
         const sceneVignette = document.getElementById('scene-vignette');
         const waveGesture = document.getElementById('wave-gesture');
@@ -1938,18 +2543,194 @@
         const openMapOnStart = false;
         let isTransitioning = false;
         let pendingTransitionSpawn = null;
+        let lockedExitMessageTimer = 0;
         const mapProgress = { circusUnlocked: false, pendingCircusReveal: false };
 
+        const gameTime = {
+            day: 1,
+            night: 1,
+            phase: 'night',
+            dayPart: 1,
+            dayPartTimer: 0,
+            dayPartDuration: 20,
+            maxDayParts: 3,
+            nightWarningShown: false,
+            nightStartDelayTimer: null,
+            pendingNightStart: false
+        };
+        const nightSectorAngle = 120;
+        const daySectorAngle = (360 - nightSectorAngle) / gameTime.maxDayParts;
+        const getNightProgress = () => {
+            const activeWaves = getActiveNightWaves();
+            const total = activeWaves.reduce((sum, wave) => sum + wave.ghosts.length, 0);
+            if (total <= 0) return 1;
+            let cleared = 0;
+            for (let i = 0; i < Math.min(currentWaveIndex, activeWaves.length); i++) cleared += activeWaves[i].ghosts.length;
+            if (currentWaveIndex < activeWaves.length) cleared += currentWaveSpawnIndex;
+            if (nightClearSettled) return 1;
+            return THREE.MathUtils.clamp(cleared / total, 0, 0.96);
+        };
+        const getClockAngle = () => {
+            if (gameTime.phase === 'night') return THREE.MathUtils.lerp(0, nightSectorAngle, getNightProgress());
+            const safePart = Math.min(gameTime.dayPart, gameTime.maxDayParts);
+            const partProgress = THREE.MathUtils.clamp(gameTime.dayPartTimer / gameTime.dayPartDuration, 0, 1);
+            return nightSectorAngle + ((safePart - 1) + partProgress) * daySectorAngle;
+        };
+        const updateClockIndicator = () => {
+            if (!nightClockIndicator) return;
+            nightClockIndicator.style.transform = 'translate(-50%, -50%) rotate(' + getClockAngle() + 'deg) translateY(-' + nightClockRadius + 'px)';
+        };
+        const nightInstructions = { pending: false, active: false, page: 0, completed: false };
+        const nightInstructionsPanel = document.getElementById('night-instructions');
+        const nightInstructionsNext = document.getElementById('night-instructions-next');
+        const nightInstructionsBack = document.getElementById('night-instructions-back');
+        const showNightInstructionPage = (page) => {
+            nightInstructions.page = page;
+            document.getElementById('night-instruction-one').hidden = page !== 0;
+            document.getElementById('night-instruction-two').hidden = page !== 1;
+            nightInstructionsBack.hidden = page === 0;
+            document.getElementById('night-instructions-page').textContent = (page + 1) + ' / 2';
+            nightInstructionsNext.textContent = page === 0 ? 'NEXT' : 'BEGIN';
+            nightInstructionsNext.focus({ preventScroll: true });
+        };
+        const openNightInstructions = () => {
+            nightInstructions.active = true;
+            nightInstructionsPanel.hidden = false;
+            document.body.classList.add('night-instructions-open');
+            moveData.forward = 0;
+            moveData.turn = 0;
+            isDashing = false;
+            showNightInstructionPage(0);
+        };
+        nightInstructionsBack.addEventListener('click', () => showNightInstructionPage(0));
+        nightInstructionsNext.addEventListener('click', () => {
+            if (!nightInstructions.active) return;
+            if (nightInstructions.page === 0) {
+                showNightInstructionPage(1);
+                return;
+            }
+            nightInstructions.completed = true;
+            nightInstructions.pending = false;
+            nightInstructions.active = false;
+            nightInstructionsPanel.hidden = true;
+            document.body.classList.remove('night-instructions-open');
+            nightInstructionsNext.blur();
+            clock.getDelta();
+            beginDay();
+        });
+        const isNightLocked = () => nightInstructions.pending || (gameTime.phase === 'night' && !nightClearSettled);
+        const isCircusPlayableNow = () => gameTime.phase === 'day' && gameTime.dayPart <= 2;
+
+        const updateTransitionMarkers = () => {
+            const routeEnabled = {
+                Basement_To_Lobby_Marker: !isNightLocked(),
+                Lobby_To_Basement_Marker: true,
+                Lobby_To_Map_Marker: !isNightLocked(),
+                Shop_To_Map_Marker: !isNightLocked(),
+                Circus_To_Map_Marker: !isNightLocked(),
+                Circus_To_Tent_Marker: isCircusPlayableNow(),
+                Tent_To_Circus_Marker: tentTrial.completed
+            };
+            const show = !isStoryIntroActive && !isIntroCinematic && !isTransitioning && !isMapOpen && !shopStarterCard.panelOpen && !nightInstructions.pending;
+            transitionMarkers.forEach((marker) => {
+                marker.visible = show && marker.parent.visible && !!routeEnabled[marker.name];
+            });
+        };
+        const spendDayPart = (reason = '') => {
+            if (gameTime.phase !== 'day') return false;
+            gameTime.dayPartTimer = 0;
+            gameTime.dayPart += 1;
+            gameTime.nightWarningShown = false;
+            if (gameTime.dayPart > gameTime.maxDayParts) {
+                gameTime.pendingNightStart = true;
+                gameTime.nightStartDelayTimer = null;
+                playWaveGesture('Night ' + (gameTime.night + 1));
+            } else if (gameTime.dayPart === gameTime.maxDayParts) {
+                playWaveGesture('Final Prep - Shop Time');
+            } else {
+                playWaveGesture('Day ' + gameTime.day + ' - Part ' + gameTime.dayPart);
+            }
+            return true;
+        };
+        const beginDay = () => {
+            restoreConnection();
+            gameTime.phase = 'day';
+            gameTime.dayPart = 1;
+            gameTime.dayPartTimer = 0;
+            gameTime.pendingNightStart = false;
+            playWaveGesture('Day ' + gameTime.day, 3.8);
+        };
+        const beginNextNight = () => {
+            gameTime.phase = 'night';
+            gameTime.night += 1;
+            gameTime.day += 1;
+            gameTime.dayPart = 1;
+            gameTime.dayPartTimer = 0;
+            gameTime.pendingNightStart = false;
+            clearTentTrialRuntime();
+            tentTrial.state = 'idle';
+            tentTrial.completed = false;
+            currentWaveIndex = 0;
+            currentWaveSpawnIndex = 0;
+            enemySpawnTimer = 0;
+            nextEnemySpawnDelay = 0;
+            wavePauseTimer = 1.8;
+            nightCoinsEarned = 0;
+            nightFailTimer = 0;
+            nightFailHandled = false;
+            nightSurvived = false;
+            nightSurviveMessageTimer = 0;
+            nightClearSettled = false;
+            firstWaveGesturePlayed = true;
+            restoreConnection();
+            eyeGlowBody.material.opacity = 1;
+            clearEnemies();
+            if (isMapOpen) {
+                isMapOpen = false;
+                mapOverlay.classList.remove('open');
+                mapOverlay.setAttribute('aria-hidden', 'true');
+            }
+            transitionToArea('basement');
+            playWaveGesture('Wave 1');
+        };
+        const updateDayNightClock = (dt) => {
+            if (gameTime.pendingNightStart) {
+                if (!isTransitioning && !isMapOpen && !shopStarterCard.panelOpen && !shopStarterCard.buying && activeArea !== 'shop') {
+                    if (gameTime.nightStartDelayTimer === null) {
+                        gameTime.nightStartDelayTimer = 2.0;
+                        playWaveGesture('Night Begins Soon');
+                    } else {
+                        gameTime.nightStartDelayTimer = Math.max(0, gameTime.nightStartDelayTimer - dt);
+                        if (gameTime.nightStartDelayTimer <= 0) beginNextNight();
+                    }
+                }
+                updateClockIndicator();
+                return;
+            }
+            if (gameTime.phase === 'day' && activeArea !== 'circusTent' && !isMapOpen && !isTransitioning && !shopStarterCard.panelOpen && !shopStarterCard.buying) {
+                gameTime.dayPartTimer += dt;
+                const remaining = gameTime.dayPartDuration - gameTime.dayPartTimer;
+                if (gameTime.dayPart === gameTime.maxDayParts && !gameTime.nightWarningShown && remaining <= 15) {
+                    gameTime.nightWarningShown = true;
+                    playWaveGesture('Next Night In 15 Seconds');
+                }
+                if (gameTime.dayPartTimer >= gameTime.dayPartDuration) spendDayPart('timer');
+            }
+            updateClockIndicator();
+        };
         const setFade = (enabled) => {
             fadeOverlay.classList.toggle('active', enabled);
         };
 
-        const playWaveGesture = (label) => {
+        let waveGestureTimeout = null;
+        const playWaveGesture = (label, duration = 2.2) => {
             waveGestureLabel.textContent = label;
+            waveGesture.style.setProperty('--gesture-duration', duration + 's');
             waveGesture.classList.remove('active');
             void waveGesture.offsetWidth;
             waveGesture.classList.add('active');
-            setTimeout(() => waveGesture.classList.remove('active'), 2200);
+            if (waveGestureTimeout) clearTimeout(waveGestureTimeout);
+            waveGestureTimeout = setTimeout(() => waveGesture.classList.remove('active'), duration * 1000 + 100);
         };
         const transitionToArea = (areaName, spawnOverride = null) => {
             if (isTransitioning || activeArea === areaName) return;
@@ -1970,6 +2751,10 @@
 
         const openMap = () => {
             if (isTransitioning) return;
+            if (isNightLocked()) {
+                playWaveGesture('Survive The Night First');
+                return;
+            }
             isTransitioning = true;
             setFade(true);
             setTimeout(() => {
@@ -2038,7 +2823,11 @@
         };
 
         const chooseMapLocation = (locationId) => {
-            if (isTransitioning || (locationId === 'circus' && !mapProgress.circusUnlocked)) return;
+            if (isTransitioning || isNightLocked() || (locationId === 'circus' && !mapProgress.circusUnlocked)) return;
+            if (locationId === 'circus' && !isCircusPlayableNow()) {
+                playWaveGesture('Circus Closed - Try Tomorrow');
+                return;
+            }
             isTransitioning = true;
             setMapLocation(locationId);
             const selectedIndicator = document.querySelector(`.map-indicator-fill[data-location="${locationId}"]`);
@@ -2117,49 +2906,202 @@
             }
         };
 
-        let baseHealth = 100;
-        let soulHealth = 100;
-                let soulCoins = 0;
-        const baseHealthDisplay = document.getElementById('base-health-display');
-        const soulHealthDisplay = document.getElementById('soul-health-display');
+        const maxConnectionHealth = 100;
+        let connectionHealth = maxConnectionHealth;
+        let soulCoins = 0;
+        let nightCoinsEarned = 0;
+        let nightFailTimer = 0;
+        let nightFailHandled = false;
+        const connectionHud = document.getElementById('connection-hud');
+        const connectionMeter = document.getElementById('connection-meter');
+        const connectionFill = document.getElementById('connection-fill');
+        const connectionValue = document.getElementById('connection-value');
+        const connectionStatus = document.getElementById('connection-status');
+        const soulWallet = document.getElementById('soul-wallet');
+        let displayedSoulCoins = 0;
         const soulCoinDisplay = document.getElementById('soul-coin-display');
         const shopPurchasePanel = document.getElementById('shop-purchase-panel');
         const shopPurchaseClose = document.getElementById('shop-purchase-close');
         const shopPurchaseBuy = document.getElementById('shop-purchase-buy');
         const shopPurchasePrice = document.getElementById('shop-purchase-price');
         const updateHealthDisplays = () => {
-            baseHealthDisplay.innerText = "Base Health: " + Math.max(0, Math.floor(baseHealth));
-            soulHealthDisplay.innerText = "Soul Health: " + Math.max(0, Math.floor(soulHealth));
-            soulCoinDisplay.innerText = "Soul Coins: " + soulCoins;
+            const health = Math.max(0, Math.min(maxConnectionHealth, connectionHealth));
+            connectionFill.style.transform = 'scaleX(' + health / maxConnectionHealth + ')';
+            connectionValue.textContent = Number(health.toFixed(1)) + '%';
+            connectionMeter.setAttribute('aria-valuenow', String(health));
+            connectionHud.classList.toggle('critical', health <= 25);
+            if (health <= 0) connectionStatus.textContent = 'Connection broken. Night failed.';
+            soulCoinDisplay.textContent = new Intl.NumberFormat('en', { notation: soulCoins >= 1000000 ? 'compact' : 'standard', maximumFractionDigits: 1 }).format(soulCoins);
+            soulCoinDisplay.setAttribute('aria-label', soulCoins + ' soul coins');
+            if (soulCoins > displayedSoulCoins) {
+                soulWallet.classList.remove('earned');
+                void soulWallet.offsetWidth;
+                soulWallet.classList.add('earned');
+            }
+            displayedSoulCoins = soulCoins;
+        };
+        const damageConnection = (amount, target) => {
+            if (connectionHealth <= 0) return;
+            connectionHealth = Math.max(0, connectionHealth - amount);
+            connectionStatus.textContent = (target === 'soul' ? 'Soul struck.' : 'Ritual struck.') + (connectionHealth <= 25 ? ' Connection critical.' : ' Connection weakened.');
+            connectionHud.classList.remove('hit');
+            void connectionHud.offsetWidth;
+            connectionHud.classList.add('hit');
+            updateHealthDisplays();
+        };
+        const restoreConnection = () => {
+            connectionHealth = maxConnectionHealth;
+            connectionHud.classList.remove('hit');
+            connectionStatus.textContent = 'Soul and ritual share one connection.';
+            updateHealthDisplays();
+        };
+
+        const resetCurrentNightAttempt = () => {
+            clearEnemies();
+            currentWaveIndex = 0;
+            currentWaveSpawnIndex = 0;
+            enemySpawnTimer = 0;
+            nextEnemySpawnDelay = 0;
+            wavePauseTimer = 1.8;
+            nightCoinsEarned = 0;
+            nightFailTimer = 0;
+            nightFailHandled = false;
+            nightSurvived = false;
+            nightSurviveMessageTimer = 0;
+            nightClearSettled = false;
+            firstWaveGesturePlayed = true;
+            restoreConnection();
+            eyeGlowBody.material.opacity = 1;
+            updateHealthDisplays();
+            playWaveGesture('Retry Night ' + gameTime.night);
+        };
+
+        const handleNightFailure = () => {
+            if (nightFailHandled) return;
+            nightFailHandled = true;
+            nightFailTimer = 2.2;
+            const lostCoins = Math.floor(nightCoinsEarned * 0.5);
+            soulCoins = Math.max(0, soulCoins - lostCoins);
+            clearEnemies();
+            updateHealthDisplays();
+            playWaveGesture(lostCoins > 0 ? 'Night Failed - Lost ' + lostCoins + ' Soul Coins' : 'Night Failed');
         };
 
         const refreshShopPurchasePanel = () => {
             if (!shopPurchasePanel) return;
-            shopPurchasePrice.textContent = shopStarterCard.price + ' Soul Coins';
-            shopPurchaseBuy.disabled = soulCoins < shopStarterCard.price || shopStarterCard.buying;
-            shopPurchaseBuy.textContent = soulCoins < shopStarterCard.price ? 'NEED 10 SOUL COINS' : (shopStarterCard.buying ? 'BOUGHT' : 'BUY');
+            shopPurchasePrice.textContent = 'A gift';
+            shopPurchaseBuy.disabled = shopStarterCard.buying;
+            shopPurchaseBuy.textContent = shopStarterCard.buying ? 'TAKEN' : 'TAKE';
         };
 
+        const shopOverlay = document.getElementById('shop-overlay');
+        const shopDialogue = document.getElementById('shop-dialogue');
+        const shopDialogueLine = document.getElementById('shop-dialogue-line');
+        const shopDialogueNext = document.getElementById('shop-dialogue-next');
+        const shopCatalogue = document.getElementById('shop-catalogue');
+        const shopCatalogueClose = document.getElementById('shop-catalogue-close');
+        const shopDialogueLines = [
+            'Oh\u2026 I can see you.',
+            'You want your human form back.',
+            'But you\u2019re only a soul now. You can\u2019t find anything like that on your own.',
+            'So I have something that can help\u2026 temporarily.',
+            'The Human Form Card.'
+        ];
+
+        const showShopStage = (stage) => {
+            shopStarterCard.stage = stage;
+            shopOverlay.classList.toggle('transforming', stage === 'transforming');
+            document.body.classList.toggle('shop-transforming', stage === 'transforming');
+            shopDialogue.hidden = stage !== 'dialogue';
+            shopCatalogue.hidden = stage !== 'catalogue';
+            shopPurchasePanel.hidden = stage !== 'offer';
+            shopPurchasePanel.classList.toggle('open', stage === 'offer');
+            shopPurchasePanel.setAttribute('aria-hidden', String(stage !== 'offer'));
+            if (stage === 'dialogue') {
+                shopDialogueLine.textContent = shopDialogueLines[shopStarterCard.dialogueIndex];
+                shopDialogueLine.classList.toggle('emphasis', shopStarterCard.dialogueIndex >= 3);
+                shopDialogueLine.classList.remove('revealing');
+                void shopDialogueLine.offsetWidth;
+                shopDialogueLine.classList.add('revealing');
+                shopDialogueNext.focus({ preventScroll: true });
+            } else if (stage === 'offer') {
+                shopPurchaseBuy.focus({ preventScroll: true });
+            } else if (stage === 'catalogue') {
+                document.getElementById('shop-wallet').textContent = soulCoins + ' Soul Coins';
+                shopCatalogueClose.focus({ preventScroll: true });
+            }
+        };
+
+        const advanceShopDialogue = () => {
+            if (shopStarterCard.stage !== 'dialogue') return;
+            shopStarterCard.dialogueTimer = 0;
+            shopStarterCard.dialogueIndex++;
+            if (shopStarterCard.dialogueIndex >= shopDialogueLines.length) {
+                shopStarterCard.dialogueSeen = true;
+                showShopStage('offer');
+            } else showShopStage('dialogue');
+        };
+        shopDialogue.addEventListener('click', advanceShopDialogue);
+        shopCatalogueClose.addEventListener('click', () => closeShopStarterPurchase(true));
+        shopOverlay.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape' && shopStarterCard.stage !== 'dialogue') {
+                closeShopStarterPurchase(true);
+            }
+            if (event.key !== 'Tab') return;
+            const buttons = Array.from(shopOverlay.querySelectorAll('button:not(:disabled)'))
+                .filter((button) => button.getClientRects().length > 0);
+            if (!buttons.length) return;
+            const index = buttons.indexOf(document.activeElement);
+            event.preventDefault();
+            buttons[(index + (event.shiftKey ? -1 : 1) + buttons.length) % buttons.length].focus();
+        });
+
         const openShopStarterPurchase = () => {
-            if (shopStarterCard.purchased || shopStarterCard.panelOpen || shopStarterCard.buying) return;
+            if (shopStarterCard.panelOpen || shopStarterCard.buying) return;
+            const start = characterGroup.position.clone();
+            const target = shopStarterCard.center.clone();
+            target.z -= 0.26;
+            const candidate = start.clone();
+            const steps = Math.max(1, Math.ceil(start.distanceTo(target) / 0.025));
+            shopStarterCard.focus.copy(start);
+            // Stop the approach before it leaves the exported walkable plane.
+            for (let step = 1; step <= steps; step++) {
+                candidate.copy(start).lerp(target, step / steps);
+                if (!isPointInsideRect(candidate, areaConfigs.shop.bounds) ||
+                    !isPointInsideMovementArea(candidate, 'shop')) break;
+                shopStarterCard.focus.copy(candidate);
+            }
             shopStarterCard.panelOpen = true;
             shopStarterCard.focusing = true;
+            moveData.forward = 0;
+            moveData.turn = 0;
+            isDashing = false;
+            shopOverlay.hidden = false;
+            document.body.classList.add('shop-open');
             shopPurchasePanel.classList.remove('buying');
-            shopPurchasePanel.classList.add('open');
-            shopPurchasePanel.setAttribute('aria-hidden', 'false');
             refreshShopPurchasePanel();
+            shopStarterCard.dialogueIndex = 0;
+            shopStarterCard.dialogueTimer = 0;
+            showShopStage(shopStarterCard.purchased ? 'catalogue' : (shopStarterCard.dialogueSeen ? 'offer' : 'dialogue'));
         };
 
         const closeShopStarterPurchase = (dismiss = true) => {
+            if (shopStarterCard.buying) return;
             shopStarterCard.panelOpen = false;
             shopStarterCard.focusing = false;
-            if (dismiss && !shopStarterCard.purchased) shopStarterCard.dismissed = true;
+            shopStarterCard.stage = 'closed';
+            if (dismiss) shopStarterCard.dismissed = true;
+            shopOverlay.hidden = true;
+            document.body.classList.remove('shop-open');
+            moveData.forward = 0;
+            moveData.turn = 0;
+            if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
             shopPurchasePanel.classList.remove('open', 'shake', 'buying');
             shopPurchasePanel.setAttribute('aria-hidden', 'true');
         };
 
         const buyShopStarterCard = () => {
-            if (shopStarterCard.purchased || shopStarterCard.buying) return;
+            if (shopStarterCard.purchased || shopStarterCard.buying || shopStarterCard.stage !== 'offer') return;
             if (soulCoins < shopStarterCard.price) {
                 shopPurchasePanel.classList.remove('shake');
                 void shopPurchasePanel.offsetWidth;
@@ -2298,9 +3240,10 @@
                 travelRotationOffset: 0
             }
         };
-        const getCurrentWave = () => enemyWaves[Math.min(currentWaveIndex, enemyWaves.length - 1)];
+        const getActiveNightWaves = () => gameTime.night === 1 ? enemyWaves.slice(0, 1) : enemyWaves;
+        const getCurrentWave = () => getActiveNightWaves()[Math.min(currentWaveIndex, getActiveNightWaves().length - 1)];
         const getWaveSpawnDelay = (wave) => THREE.MathUtils.randFloat(wave.spawnIntervalMin, wave.spawnIntervalMax);
-        const isNightWaveComplete = () => currentWaveIndex >= enemyWaves.length;
+        const isNightWaveComplete = () => currentWaveIndex >= getActiveNightWaves().length;
         const lightFirstNightCandle = () => {
             if (ritualState.candleAFlameLit) return;
             ritualState.candleAFlameLit = true;
@@ -2586,18 +3529,19 @@
         };
 
         const triggerTentJump = () => {
-            if (activeArea !== 'circusTent' || tentTrial.state !== 'play') return false;
+            if (!humanFormUnlocked || activeArea === 'basement' || gameTime.phase === 'night' ||
+                isMapOpen || isTransitioning || isIntroCinematic || isStoryIntroActive || shopStarterCard.panelOpen) return false;
+            if (activeArea === 'circusTent' && tentTrial.state !== 'play') return false;
             if (tentJumpCooldown <= 0 && tentJumpTimer <= 0) {
                 tentJumpTimer = tentJumpDuration;
                 tentJumpCooldown = 0.47;
-                if (humanFormActions.Jump) playHumanFormAction('Jump');
+
             }
             return true;
         };
 
         const triggerDash = (e) => {
             e.preventDefault();
-            if (triggerTentJump()) return;
             if (!isDashing) {
                 isDashing = true; dashTimer = 0.2; updateLastMoveDir();
             }
@@ -2605,7 +3549,9 @@
 
         const destroyEnemy = (enemy, index, awardCoins = true) => {
             if (awardCoins) {
-                soulCoins += enemy.type.coinValue || 1;
+                const coinValue = enemy.type.coinValue || 1;
+                soulCoins += coinValue;
+                if (gameTime.phase === 'night') nightCoinsEarned += coinValue;
                 updateHealthDisplays();
             }
             scene.remove(enemy.group);
@@ -2723,13 +3669,12 @@
         dashBtn.addEventListener('mousedown', triggerDash);
         slashBtn.addEventListener('touchstart', triggerSlash, { passive: false });
         slashBtn.addEventListener('mousedown', triggerSlash);
-        const toggleCinematicCamera = (event) => {
+        const handleCinematicButton = (event) => {
             if (event) event.preventDefault();
-            isCinematicCamera = !isCinematicCamera;
-            cinematicBtn.classList.toggle('active', isCinematicCamera);
+            triggerTentJump();
         };
-        cinematicBtn.addEventListener('touchstart', toggleCinematicCamera, { passive: false });
-        cinematicBtn.addEventListener('mousedown', toggleCinematicCamera);
+        cinematicBtn.addEventListener('touchstart', handleCinematicButton, { passive: false });
+        cinematicBtn.addEventListener('mousedown', handleCinematicButton);
 
         // --- 6. Game Loop ---
         const clock = new THREE.Clock();
@@ -2759,17 +3704,27 @@
         function animate() {
             requestAnimationFrame(animate);
             const dt = clock.getDelta();
-            if (humanFormMixer) humanFormMixer.update(dt);
+            if (isStoryIntroActive) {
+                updateStoryIntro(dt);
+                renderer.render(scene, camera);
+                return;
+            }
+            if (nightInstructions.pending) {
+                renderer.render(scene, camera);
+                return;
+            }
             comboTimer = Math.max(0, comboTimer - dt);
             slashRecoveryTimer = Math.max(0, slashRecoveryTimer - dt);
-            nightClockTime += dt;
-            if (nightClockIndicator) {
-                const clockAngle = nightClockTime * 26;
-                nightClockIndicator.style.transform = 'translate(-50%, -50%) rotate(' + clockAngle + 'deg) translateY(-' + nightClockRadius + 'px)';
+            if (shopStarterCard.stage === 'dialogue') {
+                shopStarterCard.dialogueTimer += dt;
+                const lineDuration = shopStarterCard.dialogueIndex === 2 ? 6.5 : 4.5;
+                if (shopStarterCard.dialogueTimer >= lineDuration) advanceShopDialogue();
             }
+            updateDayNightClock(dt);
             
             // --- Player Movement ---
-            let currentSpeed = (isMapOpen || isTransitioning || isCinematicCamera || isIntroCinematic || shopStarterCard.focusing || shopStarterCard.buying) ? 0 : (slashRecoveryTimer > 0 ? moveSpeed * 0.62 : moveSpeed);
+            let currentSpeed = (isMapOpen || isTransitioning || isCinematicCamera || isIntroCinematic || shopStarterCard.panelOpen || shopStarterCard.focusing || shopStarterCard.buying) ? 0 : (slashRecoveryTimer > 0 ? moveSpeed * 0.62 : moveSpeed);
+            if (activeArea === 'circusTent' && ['story', 'intro', 'briefing'].includes(tentTrial.state)) currentSpeed = 0;
             if (isDashing) {
                 dashTimer -= dt;
                 if (dashTimer <= 0) isDashing = false;
@@ -2791,7 +3746,15 @@
             constrainPlayerToHomeGround();
 
             if (!isMapOpen && activeArea === 'basement' && isPointInsideRect(characterGroup.position, areaConfigs.basement.nextAreaCollider)) {
-                transitionToArea('lobby');
+                if (isNightLocked()) {
+                    lockedExitMessageTimer -= dt;
+                    if (lockedExitMessageTimer <= 0) {
+                        lockedExitMessageTimer = 1.4;
+                        playWaveGesture('Survive The Night First');
+                    }
+                } else {
+                    transitionToArea('lobby');
+                }
             }
 
             if (activeArea === 'lobby') {
@@ -2808,14 +3771,30 @@
             }
 
             if (activeArea === 'circus' && isPointInsideRect(characterGroup.position, areaConfigs.circus.tentCollider)) {
-                transitionToArea('circusTent');
+                if (isCircusPlayableNow()) {
+                    transitionToArea('circusTent');
+                } else {
+                    lockedExitMessageTimer -= dt;
+                    if (lockedExitMessageTimer <= 0) {
+                        lockedExitMessageTimer = 1.4;
+                        playWaveGesture('Circus Closed - Try Tomorrow');
+                    }
+                }
             }
 
             if (activeArea === 'circusTent' && isPointInsideRect(characterGroup.position, areaConfigs.circusTent.exitCollider)) {
-                transitionToArea('circus', areaConfigs.circus.tentReturnSpawn);
+                if (tentTrial.completed) {
+                    transitionToArea('circus', areaConfigs.circus.tentReturnSpawn);
+                } else {
+                    lockedExitMessageTimer -= dt;
+                    if (lockedExitMessageTimer <= 0) {
+                        lockedExitMessageTimer = 1.4;
+                        playWaveGesture('Finish The Trial First');
+                    }
+                }
             }
 
-            if (activeArea === 'shop' && !shopStarterCard.purchased && !shopStarterCard.panelOpen && !shopStarterCard.buying) {
+            if (activeArea === 'shop' && !isMapOpen && !isTransitioning && !shopStarterCard.panelOpen && !shopStarterCard.buying) {
                 const dx = characterGroup.position.x - shopStarterCard.center.x;
                 const dz = characterGroup.position.z - shopStarterCard.center.z;
                 const cardDistance = Math.sqrt(dx * dx + dz * dz);
@@ -2824,11 +3803,12 @@
             }
 
             updateTentTrial(dt);
+            updateTransitionMarkers();
 
             if (shopStarterCard.focusing) {
                 characterGroup.position.x = THREE.MathUtils.lerp(characterGroup.position.x, shopStarterCard.focus.x, 1 - Math.pow(0.002, dt));
                 characterGroup.position.z = THREE.MathUtils.lerp(characterGroup.position.z, shopStarterCard.focus.z, 1 - Math.pow(0.002, dt));
-                lastValidPlayerPosition.copy(characterGroup.position);
+                constrainPlayerToHomeGround();
                 const focusDx = characterGroup.position.x - shopStarterCard.focus.x;
                 const focusDz = characterGroup.position.z - shopStarterCard.focus.z;
                 if (!shopStarterCard.buying && soulCoins < shopStarterCard.price && Math.sqrt(focusDx * focusDx + focusDz * focusDz) < 0.08) {
@@ -2838,19 +3818,23 @@
 
             if (shopStarterCard.buying) {
                 shopStarterCard.buyTimer += dt;
-                const progress = Math.min(1, shopStarterCard.buyTimer / 0.62);
-                const ease = progress * progress * (3 - 2 * progress);
-                if (shopStarterCard.mesh) {
+                const progress = Math.min(1, shopStarterCard.buyTimer / 0.75);
+                if (shopStarterCard.mesh && shopStarterCard.stage === 'offer') {
                     const pulse = 1 + Math.sin(progress * Math.PI) * 0.08;
                     shopStarterCard.mesh.scale.setScalar(pulse);
                 }
-                if (progress >= 1) {
-                    shopStarterCard.buying = false;
+                if (progress >= 1 && shopStarterCard.stage === 'offer') {
                     shopStarterCard.purchased = true;
                     mapProgress.pendingCircusReveal = !mapProgress.circusUnlocked;
                     if (shopStarterCard.mesh) shopStarterCard.mesh.scale.setScalar(1);
                     activateHumanForm();
-                    closeShopStarterPurchase(false);
+                    shopStarterCard.focusing = false;
+                    shopPurchasePanel.classList.remove('buying');
+                    showShopStage('transforming');
+                    triggerScreenShake(0.12, 0.16);
+                } else if (shopStarterCard.stage === 'transforming' && shopStarterCard.buyTimer >= 2.35) {
+                    shopStarterCard.buying = false;
+                    showShopStage('catalogue');
                 }
             }
 
@@ -2879,20 +3863,38 @@
             character.quaternion.copy(camera.quaternion);
             character.rotateZ(soulTilt + slashTilt);
 
-            if (humanFormUnlocked) {
+            const shouldUseHumanForm = humanFormUnlocked && activeArea !== 'basement' && gameTime.phase !== 'night';
+            cinematicBtn.textContent = 'JUMP';
+            cinematicBtn.style.display = shouldUseHumanForm ? 'flex' : 'none';
+            if (shouldUseHumanForm) {
                 character.visible = false;
                 if (humanFormRoot) {
-                    humanFormRoot.visible = true;
-                    humanFormRoot.position.y = getTentJumpHeight();
-                    const movingHuman = Math.abs(moveData.forward) > 0.05 || Math.abs(moveData.turn) > 0.05 || isDashing;
-                    playHumanFormAction(movingHuman ? 'Walk' : 'Idle');
+                    const moveTurn = isDashing ? lastMoveDir.turn : moveData.turn;
+                    const moveForward = isDashing ? lastMoveDir.forward : moveData.forward;
+                    const movingHuman = Math.abs(moveForward) > 0.05 || Math.abs(moveTurn) > 0.05 || isDashing;
+                    let stripName = 'Idle';
+                    let flipX = characterFacing;
                     if (movingHuman) {
-                        const moveAngle = Math.atan2(isDashing ? lastMoveDir.turn : moveData.turn, -(isDashing ? lastMoveDir.forward : moveData.forward));
-                        humanFormRoot.rotation.y = moveAngle + Math.PI;
+                        if (Math.abs(moveTurn) > Math.abs(moveForward) * 0.9) {
+                            stripName = 'SideRun';
+                            flipX = moveTurn >= 0 ? 1 : -1;
+                        } else {
+                            stripName = moveForward > 0 ? 'BackRun' : 'FrontRun';
+                            flipX = characterFacing;
+                        }
                     }
+                    const activeStrip = setHumanFormStrip(stripName);
+                    humanFormAnimTime += dt * (stripName === 'Idle' ? 8 : 11.5);
+                    const frame = Math.floor(humanFormAnimTime) % activeStrip.frames;
+                    activeStrip.texture.offset.x = frame / activeStrip.frames;
+                    humanFormRoot.visible = true;
+                    humanFormRoot.position.y = 0.94 + getTentJumpHeight();
+                    humanFormRoot.quaternion.copy(camera.quaternion);
+                    humanFormRoot.scale.set(flipX, 1 + Math.sin(soulAnimTime * 8) * (movingHuman ? 0.012 : 0.006), 1);
                 }
-            } else if (!isIntroCinematic) {
-                character.visible = true;
+            } else {
+                if (humanFormRoot) humanFormRoot.visible = false;
+                if (!isIntroCinematic) character.visible = true;
             }
 
             updateSlashVfx(dt);
@@ -2934,7 +3936,7 @@
                 });
             }
             // --- Enemy AI & Spawning ---
-            if (!isIntroCinematic && activeArea === 'basement' && baseHealth > 0 && soulHealth > 0) {
+            if (!isIntroCinematic && activeArea === 'basement' && connectionHealth > 0) {
                 if (!isNightWaveComplete()) {
                     const currentWave = getCurrentWave();
                     if (wavePauseTimer > 0) {
@@ -2943,12 +3945,13 @@
                         currentWaveIndex++;
                         currentWaveSpawnIndex = 0;
                         nextEnemySpawnDelay = 0;
-                        wavePauseTimer = currentWaveIndex < enemyWaves.length ? (currentWave.nextDelay || 1.8) : 0;
-                        if (currentWaveIndex < enemyWaves.length) {
-                            playWaveGesture(enemyWaves[currentWaveIndex].name);
+                        const activeWaves = getActiveNightWaves();
+                        wavePauseTimer = currentWaveIndex < activeWaves.length ? (currentWave.nextDelay || 1.8) : 0;
+                        if (currentWaveIndex < activeWaves.length) {
+                            playWaveGesture(activeWaves[currentWaveIndex].name);
                         } else if (!nightSurvived) {
                             nightSurvived = true;
-                            lightFirstNightCandle();
+                            if (gameTime.night > 1) lightFirstNightCandle();
                             nightSurviveMessageTimer = 1.25;
                         }
                     } else if (currentWaveSpawnIndex < currentWave.ghosts.length && enemies.length < maxEnemies) {
@@ -2972,9 +3975,16 @@
                     eyeGlowBody.material.opacity = Math.max(0, eyeGlowBody.material.opacity - dt * 0.85);
                     if (nightSurviveMessageTimer <= 0) {
                         nightClearSettled = true;
+                        restoreConnection();
                         eyeGlowBody.material.opacity = 0;
-                        lightFirstNightCandle();
+                        if (gameTime.night > 1) lightFirstNightCandle();
+                        nightCoinsEarned = 0;
                         playWaveGesture('You Survived The Night');
+                        if (gameTime.night === 1 && !nightInstructions.completed) {
+                            nightInstructions.pending = true;
+                            updateTransitionMarkers();
+                            setTimeout(openNightInstructions, 1800);
+                        } else setTimeout(beginDay, 1800);
                     }
                 }
 
@@ -3019,8 +4029,7 @@
                         setEnemyVisualScale(enemy, pulse);
                         if (enemy.areaWindupTimer <= 0) {
                             if (distToPlayer <= areaRadius) {
-                                soulHealth -= enemy.type.soulDamage || 10;
-                                updateHealthDisplays();
+                                damageConnection(enemy.type.soulDamage || 10, 'soul');
                                 triggerScreenShake(0.34, 0.16);
                                 createHitBurst(characterGroup.position);
                             }
@@ -3062,12 +4071,10 @@
                         setEnemyVisualScale(enemy, pulse);
                         if (enemy.windupTimer <= 0) {
                             if (attackTarget === 'player') {
-                                soulHealth -= enemy.type.soulDamage || 8;
-                                updateHealthDisplays();
+                                damageConnection(enemy.type.soulDamage || 8, 'soul');
                                 triggerScreenShake(0.24, 0.13);
                             } else {
-                                baseHealth -= enemy.type.ritualDamage;
-                                updateHealthDisplays();
+                                damageConnection(enemy.type.ritualDamage, 'ritual');
                                 triggerScreenShake(0.28, 0.14);
                                 enemy.ritualHits++;
                                 if (enemy.type.maxRitualHits && enemy.ritualHits >= enemy.type.maxRitualHits) {
@@ -3131,13 +4138,10 @@
                     }
                 }
             } else if (activeArea === 'basement') {
-                if (baseHealth <= 0) {
-                    baseHealthDisplay.innerText = "Base Destroyed! Game Over.";
-                    baseHealthDisplay.style.color = "red";
-                }
-                if (soulHealth <= 0) {
-                    soulHealthDisplay.innerText = "Soul Faded! Night Failed.";
-                    soulHealthDisplay.style.color = "#ff7070";
+                if (connectionHealth <= 0) {
+                    handleNightFailure();
+                    nightFailTimer = Math.max(0, nightFailTimer - dt);
+                    if (nightFailTimer <= 0) resetCurrentNightAttempt();
                 }
             }
             let shakeX = 0;
@@ -3242,4 +4246,5 @@
     </script>
 </body>
 </html>
+
 
